@@ -12,7 +12,7 @@ const roomFiltersRoutes = require('./roomFilters');
 const paymentMethodsRoutes = require('./paymentMethods');
 const paymentsRoutes = require('./payments');
 const otpRoutes = require('./otp'); // Import OTP routes
-// Sử dụng các routes như middleware
+
 router.use('/auth', authRoutes);
 router.use('/rooms', roomsRoutes);
 router.use('/bookings', bookingsRoutes);
