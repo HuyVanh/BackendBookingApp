@@ -1,7 +1,7 @@
 // middleware/authorize.js
 module.exports = (requiredRole) => {
     return (req, res, next) => {
-      const user = req.user; // Giả sử bạn đã có middleware auth.js để thêm user vào req
+      const user = req.user; 
   
       if (!user) {
         return res.status(401).json({ message: 'Unauthorized' });

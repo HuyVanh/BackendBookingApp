@@ -6,7 +6,7 @@ const routes = require('./routes');
 const helmet = require('helmet');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const morgan = require('morgan'); // Import morgan
+const morgan = require('morgan'); 
 
 dotenv.config();
 
