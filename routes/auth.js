@@ -9,4 +9,4 @@ router.post('/register', authController.register);
 // Đăng nhập
 router.post('/login', authController.login);
 
-module.exports = router; // Xuất router trực tiếp
+module.exports = router; 
