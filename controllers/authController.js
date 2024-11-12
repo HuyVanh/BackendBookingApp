@@ -5,16 +5,19 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+/**
+ * Controller đăng ký người dùng mới
+ */
 exports.register = async (req, res) => {
   try {
     const { username, password, email, phone_number } = req.body;
 
-    // Kiểm tra người dùng đã tồn tại
+    // Kiểm tra xem người dùng đã tồn tại chưa
     const existingUser = await User.findOne({
       $or: [{ username }, { email }],
     });
     if (existingUser) {
-      return res.status(400).json({ message: 'Username hoặc email đã tồn tại.' });
+      return res.status(400).json({ message: 'Tên đăng nhập hoặc email đã tồn tại.' });
     }
 
     // Tạo người dùng mới
@@ -39,37 +42,40 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ message: 'Đăng ký thành công.' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('Lỗi khi đăng ký:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
 
+/**
+ * Controller đăng nhập người dùng
+ */
 exports.login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Tìm người dùng theo username
+    // Tìm người dùng theo tên đăng nhập
     const user = await User.findOne({ username });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
+      return res.status(400).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng.' });
     }
 
     // Kiểm tra mật khẩu
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
+      return res.status(400).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng.' });
     }
 
     // Tạo JWT
     const token = jwt.sign(
-      { user_id: user._id, username: user.username },
+      { user_id: user._id, username: user.username, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     res.status(200).json({ token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('Lỗi khi đăng nhập:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
