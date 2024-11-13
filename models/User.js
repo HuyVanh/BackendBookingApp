@@ -6,15 +6,13 @@ const bcrypt = require('bcryptjs');
  */
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true }, // Tên đăng nhập
-    password: { type: String, required: true }, // Mật khẩu (được mã hóa)
-    email: { type: String, required: true, unique: true }, // Email
-    phone_number: { type: String }, // Số điện thoại
-    isAdmin: { type: Boolean, default: false }, // Quyền admin
-    created_at: { type: Date, default: Date.now }, // Ngày tạo
-    updated_at: { type: Date, default: Date.now }, // Ngày cập nhật
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    phone_number: { type: String },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' }, // Role người dùng
   },
-  { timestamps: false }
+  { timestamps: true }
 );
 
 // Mã hóa mật khẩu trước khi lưu

@@ -1,18 +1,22 @@
+// routes/bookings.js
 const express = require('express');
 const router = express.Router();
-const notificationController = require('../controllers/notificationController');
-const auth = require('../middleware/auth');
+const bookingController = require('../controllers/bookingController');
+const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware'); // Sửa require middleware
 
-// Tạo thông báo mới (có thể chỉ admin làm được)
-router.post('/', auth, notificationController.createNotification);
+// Lấy danh sách đặt phòng của người dùng
+router.get('/', authenticateJWT, bookingController.getUserBookings);
 
-// Lấy tất cả thông báo của người dùng
-router.get('/', auth, notificationController.getUserNotifications);
+// Tạo đặt phòng mới
+router.post('/', authenticateJWT, bookingController.createBooking);
 
-// Đánh dấu thông báo là đã đọc
-router.put('/:id/read', auth, notificationController.markAsRead);
+// Lấy chi tiết đặt phòng
+router.get('/:id', authenticateJWT, bookingController.getBookingById);
 
-// Xóa thông báo
-router.delete('/:id', auth, notificationController.deleteNotification);
+// Cập nhật trạng thái đặt phòng - chỉ admin
+router.put('/:id/status', authenticateJWT, authorizeRole('admin'), bookingController.updateBookingStatus);
+
+// Hủy đặt phòng - chỉ admin hoặc người dùng đã đặt phòng
+router.delete('/:id', authenticateJWT, authorizeRole('admin'), bookingController.cancelBooking);
 
 module.exports = router;

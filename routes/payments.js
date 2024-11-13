@@ -1,15 +1,16 @@
+// routes/payments.js
 const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
-const auth = require('../middleware/auth');
+const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware'); // Sửa require middleware
 
-// Tạo thanh toán mới
-router.post('/', auth, paymentController.createPayment);
+// Tạo thanh toán mới - chỉ người dùng đã xác thực
+router.post('/', authenticateJWT, paymentController.createPayment);
 
-// Lấy thông tin thanh toán
-router.get('/:id', auth, paymentController.getPaymentById);
+// Lấy thông tin thanh toán - chỉ người dùng đã xác thực
+router.get('/:id', authenticateJWT, paymentController.getPaymentById);
 
-// Cập nhật trạng thái thanh toán
-router.put('/:id/status', auth, paymentController.updatePaymentStatus);
+// Cập nhật trạng thái thanh toán - chỉ admin
+router.put('/:id/status', authenticateJWT, authorizeRole('admin'), paymentController.updatePaymentStatus);
 
 module.exports = router;
