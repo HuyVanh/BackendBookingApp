@@ -1,7 +1,7 @@
+// controllers/roomController.js
 const Room = require('../models/Room');
 const RoomGallery = require('../models/RoomGallery');
 const RoomMap = require('../models/RoomMap');
-
 
 /**
  * Hàm lấy danh sách tất cả các phòng
@@ -15,7 +15,6 @@ exports.getAllRooms = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
-
 
 /**
  * Hàm lấy thông tin chi tiết của một phòng theo ID
@@ -32,8 +31,6 @@ exports.getRoomById = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
-
-
 
 /**
  * Hàm tạo một phòng mới
@@ -81,7 +78,6 @@ exports.createRoom = async (req, res) => {
   }
 };
 
-
 /**
  * Hàm cập nhật thông tin phòng
  */
@@ -98,6 +94,8 @@ exports.updateRoom = async (req, res) => {
       rating,
       latitude,
       longitude,
+      isActive, // Thêm isActive vào các trường có thể cập nhật
+      isRented, // Thêm isRented vào các trường có thể cập nhật
     } = req.body;
 
     // Tìm phòng theo ID
@@ -111,12 +109,14 @@ exports.updateRoom = async (req, res) => {
     room.address = address || room.address;
     room.room_images = room_images || room.room_images;
     room.details = details || room.details;
-    room.price = price || room.price;
+    room.price = price !== undefined ? price : room.price;
     room.description = description || room.description;
     room.services = services || room.services;
     room.rating = rating !== undefined ? rating : room.rating;
     room.latitude = latitude !== undefined ? latitude : room.latitude;
     room.longitude = longitude !== undefined ? longitude : room.longitude;
+    room.isActive = isActive !== undefined ? isActive : room.isActive; // Cập nhật isActive nếu có
+    room.isRented = isRented !== undefined ? isRented : room.isRented; // Cập nhật isRented nếu có
     room.updated_at = Date.now();
 
     // Lưu thay đổi vào cơ sở dữ liệu
@@ -128,8 +128,9 @@ exports.updateRoom = async (req, res) => {
   }
 };
 
-
-// Hàm xóa phòng
+/**
+ * Hàm xóa phòng
+ */
 exports.deleteRoom = async (req, res) => {
   try {
     // Tìm phòng theo ID
