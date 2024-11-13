@@ -19,6 +19,8 @@ const roomSchema = new mongoose.Schema(
     description: { type: String }, // Mô tả phòng
     services: [{ type: String }], // Dịch vụ kèm theo
     rating: { type: Number, default: 0 }, // Đánh giá
+    isActive: { type: Boolean, default: true }, // Trường đã tồn tại
+    isRented: { type: Boolean, default: false }, // Thêm trường isRented
     latitude: { type: Number, required: true }, // Vĩ độ
     longitude: { type: Number, required: true }, // Kinh độ
     created_at: { type: Date, default: Date.now }, // Ngày tạo
