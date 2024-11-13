@@ -1,3 +1,4 @@
+// controllers/authController.js
 const User = require('../models/User');
 const Profile = require('../models/Profile');
 const jwt = require('jsonwebtoken');
@@ -68,7 +69,7 @@ exports.login = async (req, res) => {
 
     // Tạo JWT
     const token = jwt.sign(
-      { user_id: user._id, username: user.username, isAdmin: user.isAdmin },
+      { user_id: user._id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
