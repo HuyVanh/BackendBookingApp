@@ -37,4 +37,4 @@ app.listen(PORT, () => {
   console.log(`Server đang chạy trên cổng ${PORT}`);
 });
 
-module.exports = app; // Export app để sử dụng trong testing (nếu cần)
+module.exports = app; 
