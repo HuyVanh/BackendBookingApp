@@ -17,5 +17,11 @@ router.post('/register', authController.register);
  * @access Public
  */
 router.post('/login', authController.login);
+/**
+ * @route GET /api/auth/me
+ * @desc Lấy thông tin người dùng hiện tại
+ * @access Protected
+ */
+router.get('/me', authenticateJWT, authController.getMe);
 
 module.exports = router;
