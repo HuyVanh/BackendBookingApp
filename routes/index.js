@@ -11,7 +11,9 @@ const searchHistoryRoutes = require('./searchHistory');
 const roomFiltersRoutes = require('./roomFilters');
 const paymentMethodsRoutes = require('./paymentMethods');
 const paymentsRoutes = require('./payments');
-const otpRoutes = require('./otp'); // Import OTP routes
+const otpRoutes = require('./otp'); 
+const userRoutes = require('./user');
+const adminRoutes = require('./admin'); 
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomsRoutes);
@@ -22,6 +24,8 @@ router.use('/searchHistory', searchHistoryRoutes);
 router.use('/roomFilters', roomFiltersRoutes);
 router.use('/paymentMethods', paymentMethodsRoutes);
 router.use('/payments', paymentsRoutes);
-router.use('/otp', otpRoutes); // Sử dụng OTP routes
+router.use('/otp', otpRoutes);
+router.use('/user', userRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;

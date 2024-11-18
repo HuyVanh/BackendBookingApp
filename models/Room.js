@@ -25,6 +25,12 @@ const roomSchema = new mongoose.Schema(
     longitude: { type: Number, required: true }, // Kinh độ
     created_at: { type: Date, default: Date.now }, // Ngày tạo
     updated_at: { type: Date, default: Date.now }, // Ngày cập nhật
+
+    // Thêm các trường mới cho chức năng
+    bookings_count: { type: Number, default: 0 }, // Số lượng đặt phòng
+    views: { type: Number, default: 0 }, // Số lượt xem
+    last_viewed_at: { type: Date }, // Thời gian xem cuối
+    recent_bookings: { type: Number, default: 0 }, // Đặt phòng gần đây
   },
   { timestamps: false }
 );
