@@ -1,7 +1,6 @@
 // controllers/roomController.js
 const Room = require('../models/Room');
-const RoomGallery = require('../models/RoomGallery');
-const RoomMap = require('../models/RoomMap');
+const User = require('../models/User'); // Import mô hình User để sử dụng trong getSuggestedRooms
 
 /**
  * Hàm lấy danh sách tất cả các phòng
@@ -25,6 +24,12 @@ exports.getRoomById = async (req, res) => {
     if (!room) {
       return res.status(404).json({ message: 'Không tìm thấy phòng.' });
     }
+
+    // Tăng views và cập nhật last_viewed_at
+    room.views += 1;
+    room.last_viewed_at = new Date();
+    await room.save();
+
     res.status(200).json(room);
   } catch (error) {
     console.error('Lỗi khi lấy thông tin phòng:', error);
@@ -94,8 +99,8 @@ exports.updateRoom = async (req, res) => {
       rating,
       latitude,
       longitude,
-      isActive, // Thêm isActive vào các trường có thể cập nhật
-      isRented, // Thêm isRented vào các trường có thể cập nhật
+      isActive,
+      isRented,
     } = req.body;
 
     // Tìm phòng theo ID
@@ -115,8 +120,8 @@ exports.updateRoom = async (req, res) => {
     room.rating = rating !== undefined ? rating : room.rating;
     room.latitude = latitude !== undefined ? latitude : room.latitude;
     room.longitude = longitude !== undefined ? longitude : room.longitude;
-    room.isActive = isActive !== undefined ? isActive : room.isActive; // Cập nhật isActive nếu có
-    room.isRented = isRented !== undefined ? isRented : room.isRented; // Cập nhật isRented nếu có
+    room.isActive = isActive !== undefined ? isActive : room.isActive;
+    room.isRented = isRented !== undefined ? isRented : room.isRented;
     room.updated_at = Date.now();
 
     // Lưu thay đổi vào cơ sở dữ liệu
@@ -144,6 +149,65 @@ exports.deleteRoom = async (req, res) => {
     res.status(200).json({ message: 'Xóa phòng thành công.' });
   } catch (error) {
     console.error('Lỗi khi xóa phòng:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+/**
+ * Hàm lấy danh sách phòng phổ biến
+ */
+exports.getPopularRooms = async (req, res) => {
+  try {
+    const rooms = await Room.find().sort({ bookings_count: -1, rating: -1 }).limit(10);
+    res.status(200).json(rooms);
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách phòng phổ biến:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+/**
+ * Hàm lấy danh sách phòng xu hướng
+ */
+exports.getTrendingRooms = async (req, res) => {
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const rooms = await Room.find({
+      last_viewed_at: { $gte: oneWeekAgo },
+    })
+      .sort({ views: -1 })
+      .limit(10);
+
+    res.status(200).json(rooms);
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách phòng xu hướng:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+/**
+ * Hàm lấy danh sách phòng gợi ý cho người dùng
+ */
+exports.getSuggestedRooms = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    // Lấy danh sách phòng yêu thích của người dùng
+    const user = await User.findById(userId).populate('favorites');
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+
+    const favoriteRoomTypes = user.favorites.map(room => room.details.room_type);
+
+    // Tìm các phòng có cùng loại nhưng chưa được yêu thích
+    const suggestedRooms = await Room.find({
+      'details.room_type': { $in: favoriteRoomTypes },
+      _id: { $nin: user.favorites.map(room => room._id) },
+    }).limit(10);
+
+    res.status(200).json(suggestedRooms);
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách phòng gợi ý:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
