@@ -51,4 +51,23 @@ const authorizeRole = (requiredRole) => {
   };
 };
 
-module.exports = { authenticateJWT, authorizeRole };
+const Booking = require('../models/Booking');
+const authorizeCancelBooking = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Không tìm thấy đặt phòng.' });
+
+    if (booking.user.toString() !== req.user.user_id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Truy cập bị từ chối.' });
+    }
+
+    // Nếu hợp lệ, tiếp tục
+    next();
+  } catch (error) {
+    console.error('Lỗi trong middleware authorizeCancelBooking:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+
+module.exports = { authenticateJWT, authorizeRole, authorizeCancelBooking };

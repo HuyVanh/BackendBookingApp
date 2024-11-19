@@ -20,7 +20,7 @@ exports.register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: 'Tên đăng nhập hoặc email đã tồn tại.' });
     }
-
+    
     // Tạo người dùng mới
     const user = new User({
       username,

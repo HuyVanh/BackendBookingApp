@@ -1,3 +1,4 @@
+// controllers/paymentMethodController.js
 const PaymentMethod = require('../models/PaymentMethod');
 
 exports.createPaymentMethod = async (req, res) => {
@@ -16,7 +17,7 @@ exports.createPaymentMethod = async (req, res) => {
     res.status(201).json(paymentMethod);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
 
@@ -26,7 +27,7 @@ exports.getUserPaymentMethods = async (req, res) => {
     res.status(200).json(methods);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
 
@@ -35,11 +36,11 @@ exports.updatePaymentMethod = async (req, res) => {
     const { method_type, card_number, expiration_date, security_code } = req.body;
     const method = await PaymentMethod.findById(req.params.id);
 
-    if (!method) return res.status(404).json({ message: 'Payment method not found.' });
+    if (!method) return res.status(404).json({ message: 'Không tìm thấy phương thức thanh toán.' });
 
     // Kiểm tra quyền truy cập
     if (method.user.toString() !== req.user.user_id) {
-      return res.status(403).json({ message: 'Access denied.' });
+      return res.status(403).json({ message: 'Truy cập bị từ chối.' });
     }
 
     method.method_type = method_type || method.method_type;
@@ -51,24 +52,24 @@ exports.updatePaymentMethod = async (req, res) => {
     res.status(200).json(method);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
 
 exports.deletePaymentMethod = async (req, res) => {
   try {
     const method = await PaymentMethod.findById(req.params.id);
-    if (!method) return res.status(404).json({ message: 'Payment method not found.' });
+    if (!method) return res.status(404).json({ message: 'Không tìm thấy phương thức thanh toán.' });
 
     // Kiểm tra quyền truy cập
     if (method.user.toString() !== req.user.user_id) {
-      return res.status(403).json({ message: 'Access denied.' });
+      return res.status(403).json({ message: 'Truy cập bị từ chối.' });
     }
 
     await method.remove();
-    res.status(200).json({ message: 'Payment method deleted successfully.' });
+    res.status(200).json({ message: 'Xóa phương thức thanh toán thành công.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
