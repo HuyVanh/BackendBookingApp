@@ -4,6 +4,8 @@ const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const CancelBooking = require('../models/CancelBooking');
 const { validationResult } = require('express-validator');
+const Notification = require('../models/Notification');
+
 
 /**
  * Hàm lấy danh sách đặt phòng của người dùng hiện tại
@@ -29,9 +31,6 @@ exports.getUserBookings = async (req, res) => {
 
 /**
  * Hàm tạo một đặt phòng mới
- * 
- * @param {Object} req - Đối tượng yêu cầu HTTP chứa thông tin đặt phòng
- * @param {Object} res - Đối tượng phản hồi HTTP
  */
 exports.createBooking = async (req, res) => {
   // Kiểm tra kết quả xác thực
@@ -42,6 +41,10 @@ exports.createBooking = async (req, res) => {
   }
 
   try {
+    console.log('Bắt đầu thực hiện createBooking');
+
+    // Kiểm tra giá trị của req.user
+    console.log('Thông tin req.user:', req.user);
     const {
       room_id,
       check_in,
@@ -103,6 +106,18 @@ exports.createBooking = async (req, res) => {
     });
 
     await booking.save();
+    console.log('Đặt phòng đã được lưu:', booking);
+    console.log('Bắt đầu tạo thông báo cho người dùng:', req.user.user_id);
+
+    // **Tạo thông báo cho người dùng**
+    const notification = new Notification({
+      user: req.user.user_id,
+      title: 'Đặt phòng thành công',
+      content: `Bạn đã đặt phòng thành công từ ngày ${check_in} đến ${check_out} tại phòng ${room.room_name}`,
+      type: 'success',
+    });
+    await notification.save();
+    console.log('Thông báo đã được lưu:', notification);
 
     res.status(201).json(booking);
   } catch (error) {
@@ -110,6 +125,7 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
 
 
 

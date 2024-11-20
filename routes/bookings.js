@@ -2,14 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const bookingController = require('../controllers/bookingController');
-const { body } = require('express-validator'); // Thêm dòng này
-const { authenticateJWT, authorizeRole, authorizeCancelBooking } = require('../middleware/authMiddleware'); // Sửa require middleware
+const { body } = require('express-validator');
+const { authenticateJWT, authorizeCancelBooking } = require('../middleware/authMiddleware');
+const { authorizeRole } = require('../middleware/authorizeRole'); // Import authorizeRole từ tệp riêng
 
 // Lấy danh sách đặt phòng của người dùng
 router.get('/', authenticateJWT, bookingController.getUserBookings);
-
-// Xóa route này (đã bị trùng)
-// router.post('/', authenticateJWT, bookingController.createBooking);
 
 // Lấy chi tiết đặt phòng
 router.get('/:id', authenticateJWT, bookingController.getBookingById);
