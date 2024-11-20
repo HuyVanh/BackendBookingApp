@@ -1,22 +1,20 @@
-// routes/bookings.js
+// routes/notifications.js
 const express = require('express');
 const router = express.Router();
-const bookingController = require('../controllers/bookingController');
-const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware'); // Sửa require middleware
+const notificationController = require('../controllers/notificationController');
+const { authenticateJWT } = require('../middleware/authMiddleware');
+const { authorizeRole } = require('../middleware/authorizeRole');
 
-// Lấy danh sách đặt phòng của người dùng
-router.get('/', authenticateJWT, bookingController.getUserBookings);
+// Tạo thông báo mới (chỉ admin)
+router.post('/', authenticateJWT, authorizeRole('admin'), notificationController.createNotification);
 
-// Tạo đặt phòng mới
-router.post('/', authenticateJWT, bookingController.createBooking);
+// Lấy danh sách thông báo của người dùng
+router.get('/', authenticateJWT, notificationController.getUserNotifications);
 
-// Lấy chi tiết đặt phòng
-router.get('/:id', authenticateJWT, bookingController.getBookingById);
+// Đánh dấu thông báo là đã đọc
+router.put('/:id/read', authenticateJWT, notificationController.markAsRead);
 
-// Cập nhật trạng thái đặt phòng - chỉ admin
-router.put('/:id/status', authenticateJWT, authorizeRole('admin'), bookingController.updateBookingStatus);
-
-// Hủy đặt phòng - chỉ admin hoặc người dùng đã đặt phòng
-router.delete('/:id', authenticateJWT, authorizeRole('admin'), bookingController.cancelBooking);
+// Xóa thông báo
+router.delete('/:id', authenticateJWT, notificationController.deleteNotification, authorizeRole('admin'));
 
 module.exports = router;
