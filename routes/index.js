@@ -15,6 +15,7 @@ const otpRoutes = require('./otp');
 const userRoutes = require('./user');
 const adminRoutes = require('./admin');
 const ticketRoutes = require('./tickets');
+const servicesRoutes = require('./services'); // Thêm dòng này
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomsRoutes);
@@ -29,5 +30,6 @@ router.use('/otp', otpRoutes);
 router.use('/user', userRoutes);
 router.use('/admin', adminRoutes);
 router.use('/tickets', ticketRoutes);
+router.use('/services', servicesRoutes); // Thêm dòng này
 
 module.exports = router;
