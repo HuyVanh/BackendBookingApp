@@ -4,7 +4,7 @@ const router = express.Router();
 const bookingController = require('../controllers/bookingController');
 const { body } = require('express-validator');
 const { authenticateJWT, authorizeCancelBooking } = require('../middleware/authMiddleware');
-const { authorizeRole } = require('../middleware/authorizeRole'); // Import authorizeRole từ tệp riêng
+const { authorizeRole } = require('../middleware/authorizeRole');
 
 // Lấy danh sách đặt phòng của người dùng
 router.get('/', authenticateJWT, bookingController.getUserBookings);

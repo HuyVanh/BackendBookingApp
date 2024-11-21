@@ -41,7 +41,6 @@ exports.createBooking = async (req, res) => {
   }
 
   try {
-    console.log('Bắt đầu thực hiện createBooking');
 
     // Kiểm tra giá trị của req.user
     console.log('Thông tin req.user:', req.user);

@@ -17,7 +17,7 @@ const roomSchema = new mongoose.Schema(
     },
     price: { type: Number, required: true }, // Giá phòng
     description: { type: String }, // Mô tả phòng
-    services: [{ type: String }], // Dịch vụ kèm theo
+    services: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
     rating: { type: Number, default: 0 }, // Đánh giá
     isActive: { type: Boolean, default: true }, // Trường đã tồn tại
     isRented: { type: Boolean, default: false }, // Thêm trường isRented
