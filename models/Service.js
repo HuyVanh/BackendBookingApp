@@ -7,6 +7,7 @@ const serviceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true }, // Tên dịch vụ
     image: { type: String },
+    isActive: { type: Boolean, default: true },
     // Nếu bạn muốn thêm các thuộc tính khác, bạn có thể thêm ở đây
   },
   { timestamps: true }

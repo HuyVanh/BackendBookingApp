@@ -3,8 +3,7 @@ const router = express.Router();
 const serviceController = require('../controllers/serviceController');
 const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware');
 
-// Lấy danh sách dịch vụ (cho tất cả người dùng đã đăng nhập)
-// Hoặc bỏ 'authenticateJWT' nếu muốn truy cập công khai
+// Lấy danh sách dịch vụ (cho tất cả người dùng)
 router.get('/', authenticateJWT, serviceController.getAllServices);
 
 // Tạo dịch vụ mới (chỉ admin)
@@ -13,7 +12,9 @@ router.post('/', authenticateJWT, authorizeRole('admin'), serviceController.crea
 // Cập nhật dịch vụ (chỉ admin)
 router.put('/:id', authenticateJWT, authorizeRole('admin'), serviceController.updateService);
 
-// Xóa dịch vụ (chỉ admin)
-router.delete('/:id', authenticateJWT, authorizeRole('admin'), serviceController.deleteService);
+// Thay đổi trạng thái dịch vụ (chỉ admin)
+router.patch('/:id/toggle', authenticateJWT, authorizeRole('admin'), serviceController.toggleServiceStatus);
+
+
 
 module.exports = router;
