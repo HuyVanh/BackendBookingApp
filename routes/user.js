@@ -2,14 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { authenticateJWT } = require('../middleware/authMiddleware');
+const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware');
 
-/**
- * @route GET /api/user/profile
- * @desc Lấy hồ sơ người dùng
- * @access Authenticated User
- */
-router.get('/profile', authenticateJWT, userController.getProfile);
+// Lấy danh sách người dùng (chỉ admin)
+router.get('/', authenticateJWT, authorizeRole('admin'), userController.getAllUsers)
+
+// Thay đổi trạng thái người dùng (chỉ admin)
+router.patch('/:id/toggle', authenticateJWT, authorizeRole('admin'), userController.toggleUserStatus);
 
 /**
  * @route POST /api/user/favorites
