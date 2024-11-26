@@ -3,6 +3,11 @@ const router = express.Router();
 const serviceController = require('../controllers/serviceController');
 const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware');
 
+
+
+// Lấy tất cả dịch vụ (dành cho admin)
+router.get('/admin', authenticateJWT, authorizeRole('admin'), serviceController.getAllServicesAdmin);
+
 // Lấy danh sách dịch vụ (cho tất cả người dùng)
 router.get('/', authenticateJWT, serviceController.getAllServices);
 
