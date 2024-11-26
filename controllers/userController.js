@@ -4,7 +4,7 @@ const Profile = require('../models/Profile');
 const Room = require('../models/Room'); // Import mô hình Room nếu cần
 
 /**
- * Lấy danh sách tất cả người dùng
+ * Lấy danh sách tất cả người dùng (không bao gồm admin)
  */
 exports.getAllUsers = async (req, res) => {
   try {
@@ -13,13 +13,15 @@ exports.getAllUsers = async (req, res) => {
       return res.status(403).json({ message: 'Không có quyền truy cập.' });
     }
 
-    const users = await User.find().select('-password'); // Loại bỏ mật khẩu khỏi kết quả
+    // Thêm điều kiện vào truy vấn để loại bỏ admin
+    const users = await User.find({ role: 'user' }).select('-password'); // Loại bỏ mật khẩu khỏi kết quả
     res.status(200).json(users);
   } catch (error) {
     console.error('Lỗi khi lấy danh sách người dùng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
 
 
 /**
