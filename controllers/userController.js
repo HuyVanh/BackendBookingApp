@@ -4,20 +4,23 @@ const Profile = require('../models/Profile');
 const Room = require('../models/Room'); // Import mô hình Room nếu cần
 
 /**
- * Controller lấy hồ sơ người dùng
+ * Lấy danh sách tất cả người dùng
  */
-exports.getProfile = async (req, res) => {
+exports.getAllUsers = async (req, res) => {
   try {
-    const profile = await Profile.findOne({ user: req.user.user_id }).populate('user', '-password');
-    if (!profile) {
-      return res.status(404).json({ message: 'Không tìm thấy hồ sơ người dùng.' });
+    // Chỉ cho phép admin truy cập
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Không có quyền truy cập.' });
     }
-    res.status(200).json({ profile });
+
+    const users = await User.find().select('-password'); // Loại bỏ mật khẩu khỏi kết quả
+    res.status(200).json(users);
   } catch (error) {
-    console.error('Lỗi khi lấy hồ sơ:', error);
+    console.error('Lỗi khi lấy danh sách người dùng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
 
 /**
  * Thêm phòng vào danh sách yêu thích của người dùng
@@ -95,3 +98,33 @@ exports.removeFavorite = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+/**
+ * Thay đổi trạng thái hoạt động của người dùng
+ */
+exports.toggleUserStatus = async (req, res) => {
+  try {
+    // Chỉ cho phép admin truy cập
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Không có quyền truy cập.' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+    }
+
+    // Không cho phép admin tự vô hiệu hóa tài khoản của mình
+    if (user._id.equals(req.user.user_id)) {
+      return res.status(400).json({ message: 'Không thể thay đổi trạng thái của chính mình.' });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    res.status(200).json({ message: 'Cập nhật trạng thái người dùng thành công.', user });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái người dùng:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
