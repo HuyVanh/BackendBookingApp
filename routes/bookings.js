@@ -9,6 +9,12 @@ const { authorizeRole } = require('../middleware/authorizeRole');
 // Lấy danh sách đặt phòng của người dùng
 router.get('/', authenticateJWT, bookingController.getUserBookings);
 
+// routes/bookings.js
+
+// Lấy danh sách tất cả các đặt phòng (chỉ admin)
+router.get('/admin', authenticateJWT, authorizeRole('admin'), bookingController.getAllBookings);
+
+
 // Lấy chi tiết đặt phòng
 router.get('/:id', authenticateJWT, bookingController.getBookingById);
 
