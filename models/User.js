@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     phone_number: { type: String },
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
-    role: { type: String, enum: ['user', 'admin'], default: 'user' }, // Role người dùng
+    role: { type: String, enum: ['user', 'admin', 'staff'], default: 'user' }, // Role người dùng
     isActive: { type: Boolean, default: true }, // Thêm trường isActive
   },
   { timestamps: true }

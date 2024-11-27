@@ -63,33 +63,46 @@ exports.markTicketAsUsed = async (req, res) => {
     }
   };
 
-  /**
- * Kiểm tra vé bằng mã QR
+
+/**
+ * Kiểm tra vé bằng mã QR và đánh dấu là đã sử dụng
  */
 exports.checkTicketByQRCode = async (req, res) => {
-    try {
-      const { qr_code } = req.body;
-  
-      // Tìm vé theo mã QR
-      const ticket = await Ticket.findOne({ qr_code: qr_code });
-  
-      if (!ticket) return res.status(404).json({ message: 'Không tìm thấy vé.' });
-  
-      // Kiểm tra xem vé đã được sử dụng chưa
-      if (ticket.is_used) {
-        return res.status(400).json({ message: 'Vé đã được sử dụng.' });
-      }
-  
-      // Trả về thông tin vé
-      res.status(200).json({
-        message: 'Vé hợp lệ.',
-        ticket,
-      });
-    } catch (error) {
-      console.error('Error checking ticket by QR code:', error);
-      res.status(500).json({ message: 'Lỗi máy chủ.' });
+  try {
+    const { qr_code } = req.body;
+
+    // Tìm vé theo mã QR
+    const ticket = await Ticket.findOne({ qr_code: qr_code });
+
+    if (!ticket) return res.status(404).json({ message: 'Không tìm thấy vé.' });
+
+    // Kiểm tra xem vé đã được sử dụng chưa
+    if (ticket.is_used) {
+      return res.status(400).json({ message: 'Vé đã được sử dụng.' });
     }
-  };
+
+    // Đánh dấu vé là đã sử dụng
+    ticket.is_used = true;
+
+    // Thêm vào lịch sử quét vé
+    ticket.scan_history.push({
+      scanned_at: new Date(),
+      scanned_by: req.user.user_id, // ID của nhân viên quét vé
+    });
+
+    await ticket.save();
+
+    // Trả về thông tin vé
+    res.status(200).json({
+      message: 'Vé hợp lệ và đã được đánh dấu là đã sử dụng.',
+      ticket,
+    });
+  } catch (error) {
+    console.error('Error checking ticket by QR code:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
   
 
 /**
@@ -165,3 +178,23 @@ exports.getTicket = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+// controllers/ticketController.js
+
+/**
+ * Lấy lịch sử quét vé
+ */
+exports.getScanHistory = async (req, res) => {
+  try {
+    // Tìm tất cả các vé đã được quét (is_used = true)
+    const tickets = await Ticket.find({ is_used: true })
+      .populate('booking')
+      .populate('user', 'username email')
+      .populate('scan_history.scanned_by', 'username');
+
+    res.status(200).json(tickets);
+  } catch (error) {
+    console.error('Error fetching scan history:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
