@@ -27,6 +27,34 @@ exports.getUserBookings = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+// controllers/bookingController.js
+
+/**
+ * Hàm lấy danh sách tất cả các đặt phòng (chỉ dành cho admin)
+ *
+ * @param {Object} req - Đối tượng yêu cầu HTTP
+ * @param {Object} res - Đối tượng phản hồi HTTP
+ */
+exports.getAllBookings = async (req, res) => {
+  try {
+    // Chỉ cho phép admin truy cập
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Không có quyền truy cập.' });
+    }
+
+    // Tìm tất cả các đặt phòng và populate thông tin cần thiết
+    const bookings = await Booking.find()
+      .populate('user', 'username email')
+      .populate('room', 'room_name');
+
+    // Trả về danh sách đặt phòng
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách đặt phòng:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
 
 
 /**
