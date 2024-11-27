@@ -130,3 +130,100 @@ exports.toggleUserStatus = async (req, res) => {
   }
 };
 
+/**
+ * Lấy danh sách nhân viên (chỉ admin)
+ */
+exports.getStaffList = async (req, res) => {
+  try {
+    const staffList = await User.find({ role: 'staff' }).select('-password');
+    res.status(200).json(staffList);
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách nhân viên:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+/**
+ * Tạo nhân viên mới (chỉ admin)
+ */
+exports.createStaff = async (req, res) => {
+  try {
+    const { username, password, email, phone_number } = req.body;
+
+    // Kiểm tra xem username hoặc email đã tồn tại chưa
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username hoặc email đã tồn tại.' });
+    }
+
+    // Tạo người dùng mới với vai trò 'staff'
+    const newStaff = new User({
+      username,
+      password,
+      email,
+      phone_number,
+      role: 'staff',
+    });
+
+    // Lưu người dùng vào cơ sở dữ liệu
+    await newStaff.save();
+
+    res.status(201).json({ message: 'Tạo nhân viên thành công.', user: newStaff });
+  } catch (error) {
+    console.error('Lỗi khi tạo nhân viên:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+/**
+ * Cập nhật thông tin nhân viên (chỉ admin)
+ */
+exports.updateStaff = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, phone_number, isActive } = req.body;
+
+    const staff = await User.findById(id);
+
+    if (!staff || staff.role !== 'staff') {
+      return res.status(404).json({ message: 'Không tìm thấy nhân viên.' });
+    }
+
+    // Cập nhật thông tin
+    if (email) staff.email = email;
+    if (phone_number) staff.phone_number = phone_number;
+    if (typeof isActive !== 'undefined') staff.isActive = isActive;
+
+    await staff.save();
+
+    res.status(200).json({ message: 'Cập nhật thông tin nhân viên thành công.', user: staff });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật thông tin nhân viên:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+/**
+ * Bật/Tắt trạng thái hoạt động của nhân viên (chỉ admin)
+ */
+exports.toggleStaffStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const staff = await User.findById(id);
+
+    if (!staff || staff.role !== 'staff') {
+      return res.status(404).json({ message: 'Không tìm thấy nhân viên.' });
+    }
+
+    // Thay đổi trạng thái isActive
+    staff.isActive = !staff.isActive;
+    await staff.save();
+
+    res.status(200).json({ message: 'Cập nhật trạng thái nhân viên thành công.', user: staff });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái nhân viên:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+
