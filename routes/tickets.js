@@ -17,7 +17,7 @@ router.get('/:booking_id/check', authenticateJWT, ticketController.checkTicketUs
 // Đánh dấu vé là đã sử dụng
 router.post('/:booking_id/use', authenticateJWT, ticketController.markTicketAsUsed);
 
-// Kiểm tra vé bằng mã QR
+// Nhân viên quét vé bằng mã QR
 router.post('/check-qr', authenticateJWT, authorizeRole(['admin', 'staff']), ticketController.checkTicketByQRCode);
 
 
