@@ -19,6 +19,8 @@ router.post('/:booking_id/use', authenticateJWT, ticketController.markTicketAsUs
 
 // Nhân viên quét vé bằng mã QR
 router.post('/check-qr', authenticateJWT, authorizeRole(['admin', 'staff']), ticketController.checkTicketByQRCode);
+// Lấy lịch sử quét vé
+router.get('/scan-history', authenticateJWT, authorizeRole(['admin', 'staff']), ticketController.getScanHistory);
 
 
 module.exports = router;

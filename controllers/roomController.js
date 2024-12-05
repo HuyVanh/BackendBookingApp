@@ -1,6 +1,7 @@
 // controllers/roomController.js
 const Room = require('../models/Room');
 const User = require('../models/User'); // Import mô hình User để sử dụng trong getSuggestedRooms
+const mongoose = require('mongoose');
 
 /**
  * Hàm lấy danh sách tất cả các phòng
@@ -18,24 +19,46 @@ exports.getAllRooms = async (req, res) => {
 /**
  * Hàm lấy thông tin chi tiết của một phòng theo ID
  */
+
+
 exports.getRoomById = async (req, res) => {
   try {
-    const room = await Room.findById(req.params.id);
+    const roomId = req.params.id;
+    console.log('Received request to get room with ID:', roomId);
+
+    // Kiểm tra định dạng ID
+    if (!mongoose.Types.ObjectId.isValid(roomId)) {
+      console.log('Invalid room ID format:', roomId);
+      return res.status(400).json({ message: 'ID phòng không hợp lệ.' });
+    }
+
+    const room = await Room.findById(roomId);
     if (!room) {
+      console.log('Room not found with ID:', roomId);
       return res.status(404).json({ message: 'Không tìm thấy phòng.' });
     }
 
-    // Tăng views và cập nhật last_viewed_at
-    room.views += 1;
-    room.last_viewed_at = new Date();
-    await room.save();
+    // Cập nhật views và last_viewed_at bằng updateOne
+    const updateResult = await Room.updateOne(
+      { _id: roomId },
+      { $inc: { views: 1 }, $set: { last_viewed_at: new Date() } }
+    );
 
-    res.status(200).json(room);
+    if (updateResult.nModified === 0) {
+      console.log('Failed to update room views and last_viewed_at for ID:', roomId);
+      return res.status(500).json({ message: 'Cập nhật phòng không thành công.' });
+    }
+
+    const updatedRoom = await Room.findById(roomId);
+    console.log('Room updated successfully:', updatedRoom);
+
+    res.status(200).json(updatedRoom);
   } catch (error) {
     console.error('Lỗi khi lấy thông tin phòng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
 
 /**
  * Hàm tạo một phòng mới
