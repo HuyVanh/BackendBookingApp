@@ -6,9 +6,8 @@ const mongoose = require('mongoose');
 const serviceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true }, // Tên dịch vụ
-    image: { type: String },
+    icon: { type: String }, // Icon (có thể là URL hoặc tên file)
     isActive: { type: Boolean, default: true },
-    
   },
   { timestamps: true }
 );

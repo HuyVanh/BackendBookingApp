@@ -3,8 +3,6 @@ const router = express.Router();
 const serviceController = require('../controllers/serviceController');
 const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware');
 
-
-
 // Lấy tất cả dịch vụ (dành cho admin)
 router.get('/admin', authenticateJWT, authorizeRole('admin'), serviceController.getAllServicesAdmin);
 
@@ -19,7 +17,5 @@ router.put('/:id', authenticateJWT, authorizeRole('admin'), serviceController.up
 
 // Thay đổi trạng thái dịch vụ (chỉ admin)
 router.patch('/:id/toggle', authenticateJWT, authorizeRole('admin'), serviceController.toggleServiceStatus);
-
-
 
 module.exports = router;

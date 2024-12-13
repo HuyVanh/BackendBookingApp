@@ -21,6 +21,16 @@ router.put('/staff/:id', authenticateJWT, authorizeRole('admin'), userController
 
 // Bật/Tắt trạng thái hoạt động của nhân viên (chỉ admin)
 router.patch('/staff/:id/toggle', authenticateJWT, authorizeRole('admin'), userController.toggleStaffStatus);
+// Giả sử chỉ cần authenticateJWT, không cần authorizeRole
+router.put('/update-avatar', authenticateJWT, userController.updateAvatar);
+
+// Thêm route lấy thông tin admin (chỉ admin)
+router.get('/admin-info', authenticateJWT, authorizeRole('admin'), userController.getAdminInfo);
+// Đổi mật khẩu admin (chỉ admin)
+router.put('/admin-info/update-password', authenticateJWT, authorizeRole('admin'), userController.updateAdminPassword);
+
+router.put('/admin-info/update-avatar', authenticateJWT, authorizeRole('admin'), userController.updateAdminAvatar);
+
 
 module.exports = router;
 

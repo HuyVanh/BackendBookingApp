@@ -4,8 +4,6 @@ const router = express.Router();
 const roomController = require('../controllers/roomController');
 const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware');
 
-// Thêm các route mới
-
 // Lấy danh sách phòng phổ biến
 router.get('/popular', authenticateJWT, roomController.getPopularRooms);
 
@@ -15,10 +13,10 @@ router.get('/trending', authenticateJWT, roomController.getTrendingRooms);
 // Lấy danh sách phòng gợi ý cho người dùng
 router.get('/suggested', authenticateJWT, roomController.getSuggestedRooms);
 
-// Lấy danh sách phòng - Có thể là public hoặc yêu cầu xác thực
+// Lấy danh sách phòng
 router.get('/', authenticateJWT, roomController.getAllRooms);
 
-// Lấy chi tiết phòng - Có thể là public hoặc yêu cầu xác thực
+// Lấy chi tiết phòng
 router.get('/:id', authenticateJWT, roomController.getRoomById);
 
 // Tạo phòng mới - chỉ admin

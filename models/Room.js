@@ -6,6 +6,11 @@ const mongoose = require('mongoose');
  */
 const roomSchema = new mongoose.Schema(
   {
+    hotel: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Hotel', 
+      required: true 
+    },
     room_name: { type: String, required: true }, // Tên phòng
     address: { type: String, required: true }, // Địa chỉ
     room_images: [{ type: String }], // Danh sách hình ảnh phòng
@@ -19,8 +24,8 @@ const roomSchema = new mongoose.Schema(
     description: { type: String }, // Mô tả phòng
     services: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Service' }],
     rating: { type: Number, default: 0 }, // Đánh giá
-    isActive: { type: Boolean, default: true }, // Trường đã tồn tại
-    isRented: { type: Boolean, default: false }, // Thêm trường isRented
+    isActive: { type: Boolean, default: true }, // Phòng đang hoạt động hay không
+    isRented: { type: Boolean, default: false }, // Phòng đã được thuê hay chưa
     latitude: { type: Number, required: true }, // Vĩ độ
     longitude: { type: Number, required: true }, // Kinh độ
     created_at: { type: Date, default: Date.now }, // Ngày tạo

@@ -225,5 +225,118 @@ exports.toggleStaffStatus = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+/**
+ * Cập nhật avatar cho người dùng
+ * Người dùng có thể cập nhật avatar của chính mình
+ */
+exports.updateAvatar = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const { avatar } = req.body; // URL của ảnh mới
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+
+    user.avatar = avatar;
+    await user.save();
+
+    res.status(200).json({ message: 'Cập nhật avatar thành công.', user });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật avatar:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+/**
+ * Lấy thông tin admin hiện tại (chỉ admin)
+ */
+exports.getAdminInfo = async (req, res) => {
+  try {
+    const adminId = req.user.user_id; // user_id đã được gắn trong quá trình xác thực
+    const admin = await User.findById(adminId).select('-password'); // Không trả về password
+
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ message: 'Không tìm thấy admin hoặc bạn không phải admin.' });
+    }
+
+    res.status(200).json(admin);
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin admin:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+// Lấy thông tin admin (chỉ admin)
+exports.getAdminInfo = async (req, res) => {
+  try {
+    const adminId = req.user.user_id; 
+    const admin = await User.findById(adminId).select('-password'); 
+    // Không loại bỏ avatar, avatar sẽ hiển thị bình thường
+    // Mặc định select('-password') chỉ bỏ password, avatar được giữ lại.
+
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ message: 'Không tìm thấy admin hoặc bạn không phải admin.' });
+    }
+
+    // admin sẽ chứa cả avatar: admin.avatar
+    res.status(200).json(admin);
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin admin:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+// Đổi mật khẩu admin (chỉ admin)
+exports.updateAdminPassword = async (req, res) => {
+  try {
+    const adminId = req.user.user_id;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ mật khẩu mới và xác nhận.' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'Mật khẩu xác nhận không khớp.' });
+    }
+
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ message: 'Bạn không phải admin.' });
+    }
+
+    // Cập nhật mật khẩu mới
+    admin.password = newPassword;
+    await admin.save(); // userSchema.pre('save') sẽ tự động hash mật khẩu
+
+    res.status(200).json({ message: 'Đổi mật khẩu thành công.' });
+  } catch (error) {
+    console.error('Lỗi khi đổi mật khẩu admin:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+exports.updateAdminAvatar = async (req, res) => {
+  try {
+    const adminId = req.user.user_id;
+    const { avatar } = req.body;
+
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({ message: 'Bạn không phải admin.' });
+    }
+
+    admin.avatar = avatar;
+    await admin.save();
+
+    res.status(200).json({ message: 'Cập nhật avatar thành công.', user: admin });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật avatar admin:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
+
+
+
 
 

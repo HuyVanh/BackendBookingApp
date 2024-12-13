@@ -17,6 +17,7 @@ const adminRoutes = require('./admin');
 const ticketRoutes = require('./tickets');
 const servicesRoutes = require('./services');
 const statisticsRoutes = require('./statistics');
+const hotelsRoutes = require('./hotels');
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomsRoutes);
@@ -33,5 +34,6 @@ router.use('/admin', adminRoutes);
 router.use('/tickets', ticketRoutes);
 router.use('/services', servicesRoutes);
 router.use('/statistics', statisticsRoutes);
+router.use('/hotels', hotelsRoutes);
 
 module.exports = router;
