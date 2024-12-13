@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
     role: { type: String, enum: ['user', 'admin', 'staff'], default: 'user' }, // Role người dùng
     isActive: { type: Boolean, default: true }, // Thêm trường isActive
+    avatar: { type: String }
   },
   { timestamps: true }
 );

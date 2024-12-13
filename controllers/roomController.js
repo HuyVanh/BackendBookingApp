@@ -1,6 +1,6 @@
 // controllers/roomController.js
 const Room = require('../models/Room');
-const User = require('../models/User'); // Import mô hình User để sử dụng trong getSuggestedRooms
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
 /**
@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
  */
 exports.getAllRooms = async (req, res) => {
   try {
-    const rooms = await Room.find();
+    // Thêm .populate('hotel') để lấy thông tin chi nhánh kèm theo
+    const rooms = await Room.find().populate('hotel');
     res.status(200).json(rooms);
   } catch (error) {
     console.error('Lỗi khi lấy danh sách phòng:', error);
@@ -16,43 +17,33 @@ exports.getAllRooms = async (req, res) => {
   }
 };
 
-/**
- * Hàm lấy thông tin chi tiết của một phòng theo ID
- */
 
+// controllers/roomController.js
 
 exports.getRoomById = async (req, res) => {
   try {
     const roomId = req.params.id;
-    console.log('Received request to get room with ID:', roomId);
 
-    // Kiểm tra định dạng ID
+    // Kiểm tra ID
     if (!mongoose.Types.ObjectId.isValid(roomId)) {
-      console.log('Invalid room ID format:', roomId);
       return res.status(400).json({ message: 'ID phòng không hợp lệ.' });
     }
 
-    const room = await Room.findById(roomId);
+    // Thêm populate('hotel') để lấy thông tin chi tiết khách sạn
+    let room = await Room.findById(roomId)
+      .populate('hotel') // Populate hotel
+      .populate('services'); // Nếu muốn, có thể populate services
+
     if (!room) {
-      console.log('Room not found with ID:', roomId);
       return res.status(404).json({ message: 'Không tìm thấy phòng.' });
     }
 
-    // Cập nhật views và last_viewed_at bằng updateOne
-    const updateResult = await Room.updateOne(
-      { _id: roomId },
-      { $inc: { views: 1 }, $set: { last_viewed_at: new Date() } }
-    );
+    // Cập nhật views và last_viewed_at trực tiếp trên document
+    room.views += 1;
+    room.last_viewed_at = new Date();
+    await room.save();
 
-    if (updateResult.nModified === 0) {
-      console.log('Failed to update room views and last_viewed_at for ID:', roomId);
-      return res.status(500).json({ message: 'Cập nhật phòng không thành công.' });
-    }
-
-    const updatedRoom = await Room.findById(roomId);
-    console.log('Room updated successfully:', updatedRoom);
-
-    res.status(200).json(updatedRoom);
+    res.status(200).json(room);
   } catch (error) {
     console.error('Lỗi khi lấy thông tin phòng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
@@ -66,6 +57,7 @@ exports.getRoomById = async (req, res) => {
 exports.createRoom = async (req, res) => {
   try {
     const {
+      hotel,
       room_name,
       address,
       room_images,
@@ -79,12 +71,13 @@ exports.createRoom = async (req, res) => {
     } = req.body;
 
     // Kiểm tra các trường bắt buộc
-    if (!room_name || !address || !price || !latitude || !longitude || !details) {
-      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin phòng.' });
+    if (!hotel || !room_name || !address || !price || !latitude || !longitude || !details) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin phòng (bao gồm hotel).' });
     }
 
     // Tạo đối tượng phòng mới
     const room = new Room({
+      hotel,
       room_name,
       address,
       room_images,
@@ -133,18 +126,19 @@ exports.updateRoom = async (req, res) => {
     }
 
     // Cập nhật thông tin phòng
-    room.room_name = room_name || room.room_name;
-    room.address = address || room.address;
-    room.room_images = room_images || room.room_images;
-    room.details = details || room.details;
-    room.price = price !== undefined ? price : room.price;
-    room.description = description || room.description;
-    room.services = services || room.services;
-    room.rating = rating !== undefined ? rating : room.rating;
-    room.latitude = latitude !== undefined ? latitude : room.latitude;
-    room.longitude = longitude !== undefined ? longitude : room.longitude;
-    room.isActive = isActive !== undefined ? isActive : room.isActive;
-    room.isRented = isRented !== undefined ? isRented : room.isRented;
+    if (room_name !== undefined) room.room_name = room_name;
+    if (address !== undefined) room.address = address;
+    if (room_images !== undefined) room.room_images = room_images;
+    if (details !== undefined) room.details = details;
+    if (price !== undefined) room.price = price;
+    if (description !== undefined) room.description = description;
+    if (services !== undefined) room.services = services;
+    if (rating !== undefined) room.rating = rating;
+    if (latitude !== undefined) room.latitude = latitude;
+    if (longitude !== undefined) room.longitude = longitude;
+    if (isActive !== undefined) room.isActive = isActive;
+    if (isRented !== undefined) room.isRented = isRented;
+
     room.updated_at = Date.now();
 
     // Lưu thay đổi vào cơ sở dữ liệu

@@ -1,19 +1,18 @@
-// controllers/serviceController.js
 const Service = require('../models/Service');
-const Room = require('../models/Room'); // Đảm bảo bạn đã import Room nếu sử dụng trong deleteService
+const Room = require('../models/Room');
 
 /**
  * Tạo dịch vụ mới
  */
 exports.createService = async (req, res) => {
   try {
-    const { name, image } = req.body;
+    const { name, icon } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: 'Vui lòng cung cấp tên dịch vụ.' });
     }
 
-    const service = new Service({ name, image });
+    const service = new Service({ name, icon });
     await service.save();
 
     res.status(201).json(service);
@@ -28,15 +27,15 @@ exports.createService = async (req, res) => {
  */
 exports.updateService = async (req, res) => {
   try {
-    const { name, image } = req.body;
+    const { name, icon } = req.body;
     const service = await Service.findById(req.params.id);
 
     if (!service) {
       return res.status(404).json({ message: 'Không tìm thấy dịch vụ.' });
     }
 
-    service.name = name || service.name;
-    service.image = image || service.image;
+    if (name) service.name = name;
+    if (icon) service.icon = icon;
 
     await service.save();
 
@@ -51,16 +50,16 @@ exports.updateService = async (req, res) => {
  * Lấy danh sách tất cả các dịch vụ đang hoạt động
  */
 exports.getAllServices = async (req, res) => {
-    try {
-      const services = await Service.find({ isActive: true });
-      res.status(200).json(services);
-    } catch (error) {
-      console.error('Lỗi khi lấy danh sách dịch vụ:', error);
-      res.status(500).json({ message: 'Lỗi máy chủ.' });
-    }
-  };
+  try {
+    const services = await Service.find({ isActive: true });
+    res.status(200).json(services);
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách dịch vụ:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
 
-  /**
+/**
  * Lấy danh sách tất cả dịch vụ (dành cho admin)
  */
 exports.getAllServicesAdmin = async (req, res) => {
@@ -78,7 +77,6 @@ exports.getAllServicesAdmin = async (req, res) => {
   }
 };
 
-  
 /**
  * Thay đổi trạng thái hoạt động của dịch vụ
  */
@@ -99,5 +97,3 @@ exports.toggleServiceStatus = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
-
-  
