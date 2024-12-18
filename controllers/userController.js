@@ -148,7 +148,7 @@ exports.getStaffList = async (req, res) => {
  */
 exports.createStaff = async (req, res) => {
   try {
-    const { username, password, email, phone_number } = req.body;
+    const { username, password, email, phone_number, avatar} = req.body;
 
     // Kiểm tra xem username hoặc email đã tồn tại chưa
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
@@ -163,6 +163,7 @@ exports.createStaff = async (req, res) => {
       email,
       phone_number,
       role: 'staff',
+      avatar: avatar ,
     });
 
     // Lưu người dùng vào cơ sở dữ liệu
@@ -202,6 +203,23 @@ exports.updateStaff = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+/// Lấy thông tin chi tiết nhân viên (chỉ admin)
+exports.getStaffById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const staff = await User.findById(id).select('-password'); // Không trả về password
+
+    if (!staff || staff.role !== 'staff') {
+      return res.status(404).json({ message: 'Không tìm thấy nhân viên.' });
+    }
+
+    res.status(200).json(staff);
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin chi tiết nhân viên:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+
 /**
  * Bật/Tắt trạng thái hoạt động của nhân viên (chỉ admin)
  */
@@ -331,6 +349,34 @@ exports.updateAdminAvatar = async (req, res) => {
     res.status(200).json({ message: 'Cập nhật avatar thành công.', user: admin });
   } catch (error) {
     console.error('Lỗi khi cập nhật avatar admin:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+exports.createUser = async (req, res) => {
+  try {
+    const { username, password, email, phone_number, role, isActive, avatar } = req.body;
+
+    // Kiểm tra trùng lặp username hoặc email
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username hoặc email đã tồn tại.' });
+    }
+
+    const newUser = new User({
+      username,
+      password,
+      email,
+      phone_number,
+      role, // role: 'admin'
+      isActive,
+      avatar,
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: 'Tạo người dùng thành công.', user: newUser });
+  } catch (error) {
+    console.error('Lỗi khi tạo người dùng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };

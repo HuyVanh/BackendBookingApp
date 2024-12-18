@@ -82,3 +82,30 @@ exports.deleteHotel = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
+// Bật/tắt trạng thái khách sạn
+exports.toggleHotelStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Tìm khách sạn theo ID
+    const hotel = await Hotel.findById(id);
+    if (!hotel) {
+      return res.status(404).json({ message: 'Không tìm thấy khách sạn.' });
+    }
+
+    // Đảo ngược trạng thái hiện tại
+    hotel.isActive = !hotel.isActive;
+    hotel.updated_at = Date.now();
+
+    await hotel.save();
+
+    res.status(200).json({
+      message: `Khách sạn đã được ${hotel.isActive ? 'kích hoạt' : 'vô hiệu hóa'}.`,
+      isActive: hotel.isActive
+    });
+  } catch (error) {
+    console.error('Lỗi khi bật/tắt trạng thái khách sạn:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};

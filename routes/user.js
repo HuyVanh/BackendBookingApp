@@ -15,6 +15,8 @@ router.get('/staff', authenticateJWT, authorizeRole('admin'), userController.get
 
 // Thêm nhân viên mới (chỉ admin)
 router.post('/staff', authenticateJWT, authorizeRole('admin'), userController.createStaff);
+// Lấy chi tiết nhân viên (chỉ admin)
+router.get('/staff/:id', authenticateJWT, authorizeRole('admin'), userController.getStaffById);
 
 // Cập nhật thông tin nhân viên (chỉ admin)
 router.put('/staff/:id', authenticateJWT, authorizeRole('admin'), userController.updateStaff);
@@ -30,9 +32,8 @@ router.get('/admin-info', authenticateJWT, authorizeRole('admin'), userControlle
 router.put('/admin-info/update-password', authenticateJWT, authorizeRole('admin'), userController.updateAdminPassword);
 
 router.put('/admin-info/update-avatar', authenticateJWT, authorizeRole('admin'), userController.updateAdminAvatar);
-
-
-module.exports = router;
+// routes/user.js
+router.post('/create', authenticateJWT, authorizeRole('admin'), userController.createUser);
 
 
 // Các route liên quan đến favorites

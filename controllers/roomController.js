@@ -3,19 +3,28 @@ const Room = require('../models/Room');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
-/**
- * Hàm lấy danh sách tất cả các phòng
- */
+// controllers/roomController.js
+
 exports.getAllRooms = async (req, res) => {
   try {
+    const filter = {};
+
+    // Kiểm tra nếu có tham số truy vấn 'isActive'
+    if (req.query.isActive !== undefined) {
+      // Chuyển đổi giá trị từ chuỗi sang boolean
+      filter.isActive = req.query.isActive === 'true';
+    }
+
     // Thêm .populate('hotel') để lấy thông tin chi nhánh kèm theo
-    const rooms = await Room.find().populate('hotel');
+    const rooms = await Room.find(filter).populate('hotel');
+
     res.status(200).json(rooms);
   } catch (error) {
     console.error('Lỗi khi lấy danh sách phòng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
 
 
 // controllers/roomController.js
