@@ -17,5 +17,7 @@ router.put('/:id', authenticateJWT, authorizeRole('admin'), hotelController.upda
 
 // Xóa khách sạn - chỉ admin
 router.delete('/:id', authenticateJWT, authorizeRole('admin'), hotelController.deleteHotel);
+// **Thêm route bật/tắt trạng thái khách sạn - chỉ admin**
+router.patch('/:id/toggle', authenticateJWT, authorizeRole('admin'), hotelController.toggleHotelStatus);
 
 module.exports = router;
