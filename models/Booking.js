@@ -33,8 +33,10 @@ const bookingSchema = new mongoose.Schema(
     status_history: [statusHistorySchema],
     personal_info: personalInfoSchema, // Thêm trường thông tin cá nhân
     price: { type: Number, required: true }, // Giá tiền của đặt phòng
+    currency: { type: String, default: 'VND' }, // Thêm trường đơn vị tiền tệ
+    payment_status: { type: String, enum: ['unpaid', 'paid', 'refunded'], default: 'unpaid' }, // Thêm trạng thái thanh toán
   },
-  { timestamps: false }
+  { timestamps: true } // Bật timestamps để theo dõi createdAt và updatedAt
 );
 
 module.exports = mongoose.model('Booking', bookingSchema);
