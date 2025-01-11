@@ -5,6 +5,9 @@ const ticketController = require('../controllers/ticketController');
 const { authenticateJWT } = require('../middleware/authMiddleware');
 const { authorizeRole } = require('../middleware/authorizeRole');
 
+
+router.get('/booking/:booking_id', authenticateJWT, ticketController.getTicketByBooking);
+
 // Tạo vé cho đặt phòng (sau khi thanh toán)
 router.post('/:booking_id', authenticateJWT, ticketController.createTicket);
 

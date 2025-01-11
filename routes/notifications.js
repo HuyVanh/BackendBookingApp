@@ -17,4 +17,7 @@ router.put('/:id/read', authenticateJWT, notificationController.markAsRead);
 // Xóa thông báo
 router.delete('/:id', authenticateJWT, notificationController.deleteNotification, authorizeRole('admin'));
 
+router.post('/booking-notification', authenticateJWT, notificationController.createBookingNotification);
+router.put('/mark-all-read', authenticateJWT, notificationController.markAllAsRead);
+
 module.exports = router;

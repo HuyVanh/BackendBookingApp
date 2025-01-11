@@ -1,22 +1,15 @@
-// routes/bookings.js
 const express = require('express');
 const router = express.Router();
-const bookingController = require('../controllers/bookingController');
-const { authenticateJWT, authorizeRole } = require('../middleware/authMiddleware'); // Sửa require middleware
+const roomreviewController = require('../controllers/roomReviewController');
+const { authenticateJWT } = require('../middleware/authMiddleware');
 
-// Lấy danh sách đặt phòng của người dùng
-router.get('/', authenticateJWT, bookingController.getUserBookings);
+// Tạo review mới
+router.post('/', authenticateJWT, roomreviewController.createReview);
 
-// Tạo đặt phòng mới
-router.post('/', authenticateJWT, bookingController.createBooking);
+// Lấy reviews theo phòng
+router.get('/room/:roomId', roomreviewController.getReviewsByRoom);
 
-// Lấy chi tiết đặt phòng
-router.get('/:id', authenticateJWT, bookingController.getBookingById);
-
-// Cập nhật trạng thái đặt phòng - chỉ admin
-router.put('/:id/status', authenticateJWT, authorizeRole('admin'), bookingController.updateBookingStatus);
-
-// Hủy đặt phòng - chỉ admin hoặc người dùng đã đặt phòng
-router.delete('/:id', authenticateJWT, authorizeRole('admin'), bookingController.cancelBooking);
+// Lấy reviews của user đã đăng nhập
+router.get('/user', authenticateJWT, roomreviewController.getReviewsByUser);
 
 module.exports = router;

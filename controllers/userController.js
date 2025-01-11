@@ -81,16 +81,16 @@ exports.getFavorites = async (req, res) => {
 exports.removeFavorite = async (req, res) => {
   try {
     const userId = req.user.user_id;
-    const { roomId } = req.body;
+    const { roomId } = req.params; // <-- lấy từ params thay vì body
 
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
     }
 
-    // Kiểm tra xem phòng có trong danh sách yêu thích không
+    // Kiểm tra xem roomId có tồn tại trong favorites không
     if (user.favorites.includes(roomId)) {
-      user.favorites = user.favorites.filter((id) => id.toString() !== roomId);
+      user.favorites = user.favorites.filter(id => id.toString() !== roomId);
       await user.save();
     }
 
@@ -100,6 +100,7 @@ exports.removeFavorite = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+
 /**
  * Thay đổi trạng thái hoạt động của người dùng
  */
@@ -265,41 +266,25 @@ exports.updateAvatar = async (req, res) => {
   }
 };
 
-/**
- * Lấy thông tin admin hiện tại (chỉ admin)
- */
-exports.getAdminInfo = async (req, res) => {
-  try {
-    const adminId = req.user.user_id; // user_id đã được gắn trong quá trình xác thực
-    const admin = await User.findById(adminId).select('-password'); // Không trả về password
-
-    if (!admin || admin.role !== 'admin') {
-      return res.status(403).json({ message: 'Không tìm thấy admin hoặc bạn không phải admin.' });
-    }
-
-    res.status(200).json(admin);
-  } catch (error) {
-    console.error('Lỗi khi lấy thông tin admin:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
-  }
-};
 
 // Lấy thông tin admin (chỉ admin)
 exports.getAdminInfo = async (req, res) => {
   try {
-    const adminId = req.user.user_id; 
-    const admin = await User.findById(adminId).select('-password'); 
-    // Không loại bỏ avatar, avatar sẽ hiển thị bình thường
-    // Mặc định select('-password') chỉ bỏ password, avatar được giữ lại.
+    console.log('User requesting admin info:', req.user);
+    const adminId = req.user.user_id;
+    console.log('Admin ID:', adminId);
+
+    const admin = await User.findById(adminId).select('-password');
+    console.log('Found admin:', admin);
 
     if (!admin || admin.role !== 'admin') {
+      console.log('Role check failed:', admin?.role);
       return res.status(403).json({ message: 'Không tìm thấy admin hoặc bạn không phải admin.' });
     }
 
-    // admin sẽ chứa cả avatar: admin.avatar
     res.status(200).json(admin);
   } catch (error) {
-    console.error('Lỗi khi lấy thông tin admin:', error);
+    console.error('Chi tiết lỗi:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
@@ -378,6 +363,28 @@ exports.createUser = async (req, res) => {
   } catch (error) {
     console.error('Lỗi khi tạo người dùng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+exports.getAdmin = async (req, res) => {
+  try {
+    const admin = await User.findOne({ role: 'admin' });
+    if (!admin) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy admin' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      user: {
+        _id: admin._id,
+        username: admin.username,
+      } 
+    });
+  } catch (error) {
+    console.error('Error getting admin:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
 

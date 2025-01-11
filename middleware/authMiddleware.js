@@ -20,15 +20,20 @@ const authenticateJWT = (req, res, next) => {
     return res.status(401).json({ message: 'Thiếu token truy cập.' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.error('Lỗi xác thực token:', err);
-      return res.status(403).json({ message: 'Token không hợp lệ.' });
-    }
-
-    req.user = user; // Thêm thông tin người dùng vào req
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Chuyển user_id thành _id để phù hợp với mongoose
+    req.user = {
+      _id: decoded.user_id,  // Thêm dòng này
+      user_id: decoded.user_id,
+      username: decoded.username,
+      role: decoded.role
+    };
     next();
-  });
+  } catch (err) {
+    console.error('Lỗi xác thực token:', err);
+    return res.status(403).json({ message: 'Token không hợp lệ.' });
+  }
 };
 
 /**
@@ -68,6 +73,22 @@ const authorizeCancelBooking = async (req, res, next) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+/**
+ * Middleware kiểm tra quyền staff
+ */
+const verifyStaff = (req, res, next) => {
+  const user = req.user;
+
+  if (!user) {
+    return res.status(401).json({ message: 'Chưa xác thực.' });
+  }
+
+  if (user.role !== 'staff') {
+    return res.status(403).json({ message: 'Chỉ nhân viên mới có quyền truy cập.' });
+  }
+
+  next();
+};
 
 
-module.exports = { authenticateJWT, authorizeRole, authorizeCancelBooking };
+module.exports = { authenticateJWT, authorizeRole, authorizeCancelBooking, verifyStaff };
