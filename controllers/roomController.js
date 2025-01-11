@@ -1,9 +1,10 @@
 // controllers/roomController.js
-const Room = require('../models/Room');
-const User = require('../models/User');
-const mongoose = require('mongoose');
+const Room = require("../models/Room");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
-// controllers/roomController.js
+
+
 
 exports.getAllRooms = async (req, res) => {
   try {
@@ -12,20 +13,21 @@ exports.getAllRooms = async (req, res) => {
     // Kiểm tra nếu có tham số truy vấn 'isActive'
     if (req.query.isActive !== undefined) {
       // Chuyển đổi giá trị từ chuỗi sang boolean
-      filter.isActive = req.query.isActive === 'true';
+      filter.isActive = req.query.isActive === "true";
+    }
+    if (req.query.room_type) {
+      filter['details.room_type'] = req.query.room_type;
     }
 
     // Thêm .populate('hotel') để lấy thông tin chi nhánh kèm theo
-    const rooms = await Room.find(filter).populate('hotel');
+    const rooms = await Room.find(filter).populate("hotel");
 
     res.status(200).json(rooms);
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách phòng:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Lỗi khi lấy danh sách phòng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
-
-
 
 // controllers/roomController.js
 
@@ -35,16 +37,16 @@ exports.getRoomById = async (req, res) => {
 
     // Kiểm tra ID
     if (!mongoose.Types.ObjectId.isValid(roomId)) {
-      return res.status(400).json({ message: 'ID phòng không hợp lệ.' });
+      return res.status(400).json({ message: "ID phòng không hợp lệ." });
     }
 
     // Thêm populate('hotel') để lấy thông tin chi tiết khách sạn
     let room = await Room.findById(roomId)
-      .populate('hotel') // Populate hotel
-      .populate('services'); // Nếu muốn, có thể populate services
+      .populate("hotel") // Populate hotel
+      .populate("services"); // Nếu muốn, có thể populate services
 
     if (!room) {
-      return res.status(404).json({ message: 'Không tìm thấy phòng.' });
+      return res.status(404).json({ message: "Không tìm thấy phòng." });
     }
 
     // Cập nhật views và last_viewed_at trực tiếp trên document
@@ -54,11 +56,10 @@ exports.getRoomById = async (req, res) => {
 
     res.status(200).json(room);
   } catch (error) {
-    console.error('Lỗi khi lấy thông tin phòng:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Lỗi khi lấy thông tin phòng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
-
 
 /**
  * Hàm tạo một phòng mới
@@ -80,8 +81,20 @@ exports.createRoom = async (req, res) => {
     } = req.body;
 
     // Kiểm tra các trường bắt buộc
-    if (!hotel || !room_name || !address || !price || !latitude || !longitude || !details) {
-      return res.status(400).json({ message: 'Vui lòng cung cấp đầy đủ thông tin phòng (bao gồm hotel).' });
+    if (
+      !hotel ||
+      !room_name ||
+      !address ||
+      !price ||
+      !latitude ||
+      !longitude ||
+      !details
+    ) {
+      return res
+        .status(400)
+        .json({
+          message: "Vui lòng cung cấp đầy đủ thông tin phòng (bao gồm hotel).",
+        });
     }
 
     // Tạo đối tượng phòng mới
@@ -103,8 +116,8 @@ exports.createRoom = async (req, res) => {
     await room.save();
     res.status(201).json(room);
   } catch (error) {
-    console.error('Lỗi khi tạo phòng:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Lỗi khi tạo phòng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
 
@@ -131,7 +144,7 @@ exports.updateRoom = async (req, res) => {
     // Tìm phòng theo ID
     const room = await Room.findById(req.params.id);
     if (!room) {
-      return res.status(404).json({ message: 'Không tìm thấy phòng.' });
+      return res.status(404).json({ message: "Không tìm thấy phòng." });
     }
 
     // Cập nhật thông tin phòng
@@ -154,8 +167,8 @@ exports.updateRoom = async (req, res) => {
     await room.save();
     res.status(200).json(room);
   } catch (error) {
-    console.error('Lỗi khi cập nhật phòng:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Lỗi khi cập nhật phòng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
 
@@ -167,15 +180,15 @@ exports.deleteRoom = async (req, res) => {
     // Tìm phòng theo ID
     const room = await Room.findById(req.params.id);
     if (!room) {
-      return res.status(404).json({ message: 'Không tìm thấy phòng.' });
+      return res.status(404).json({ message: "Không tìm thấy phòng." });
     }
 
     // Xóa phòng khỏi cơ sở dữ liệu
     await room.remove();
-    res.status(200).json({ message: 'Xóa phòng thành công.' });
+    res.status(200).json({ message: "Xóa phòng thành công." });
   } catch (error) {
-    console.error('Lỗi khi xóa phòng:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Lỗi khi xóa phòng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
 
@@ -184,11 +197,24 @@ exports.deleteRoom = async (req, res) => {
  */
 exports.getPopularRooms = async (req, res) => {
   try {
-    const rooms = await Room.find().sort({ bookings_count: -1, rating: -1 }).limit(10);
+    console.log("Auth header:", req.headers.authorization);
+    console.log("User:", req.user);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const rooms = await Room.find({
+      updated_at: { $gte: thirtyDaysAgo },
+    })
+      .sort({
+        bookings_count: -1,
+        average_rating: -1,
+        views: -1,
+      })
+      .limit(10);
+
     res.status(200).json(rooms);
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách phòng phổ biến:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
 
@@ -208,8 +234,8 @@ exports.getTrendingRooms = async (req, res) => {
 
     res.status(200).json(rooms);
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách phòng xu hướng:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Lỗi khi lấy danh sách phòng xu hướng:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
 
@@ -219,21 +245,11 @@ exports.getTrendingRooms = async (req, res) => {
 exports.getSuggestedRooms = async (req, res) => {
   try {
     const userId = req.user.user_id;
-    // Lấy danh sách phòng yêu thích của người dùng
-    const user = await User.findById(userId).populate('favorites');
-    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
-
-    const favoriteRoomTypes = user.favorites.map(room => room.details.room_type);
-
-    // Tìm các phòng có cùng loại nhưng chưa được yêu thích
-    const suggestedRooms = await Room.find({
-      'details.room_type': { $in: favoriteRoomTypes },
-      _id: { $nin: user.favorites.map(room => room._id) },
-    }).limit(10);
-
-    res.status(200).json(suggestedRooms);
+    const user = await User.findById(userId);
+    const rooms = await Room.find({ isActive: true }).select("-__v").limit(10);
+    res.json(rooms);
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách phòng gợi ý:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error("Detailed error:", error);
+    res.status(500).json({ message: error.message });
   }
 };

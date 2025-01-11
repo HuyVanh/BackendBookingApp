@@ -23,5 +23,18 @@ router.post('/login', authController.login);
  * @access Protected
  */
 router.get('/me', authenticateJWT, authController.getMe);
+/**
+ * @route PUT /api/auth/update-profile
+ * @desc Cập nhật thông tin người dùng
+ * @access Protected
+ */
+/**
+ * @route POST /api/auth/reset-password
+ * @desc Reset password with token
+ * @access Public
+ */
+router.post('/reset-password', authController.resetPassword);
+router.put('/update-profile', authenticateJWT, authController.updateProfile);
+router.get('/profile', authenticateJWT, authController.getProfile);
 
 module.exports = router;

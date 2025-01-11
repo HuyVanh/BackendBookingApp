@@ -84,3 +84,31 @@ exports.deleteNotification = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+// Trong notificationController.js
+exports.createBookingNotification = async (req, res) => {
+  try {
+    const { title, content, type } = req.body;
+    const notification = new Notification({
+      user: req.user.user_id,
+      title,
+      content,
+      type,
+    });
+    await notification.save();
+    res.status(201).json(notification);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+exports.markAllAsRead = async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { user: req.user.user_id, is_read: false },
+      { $set: { is_read: true } }
+    );
+    res.status(200).json({ message: 'Đã đánh dấu tất cả là đã đọc' });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};

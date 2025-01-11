@@ -71,7 +71,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       { user_id: user._id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '5h' }
     );
 
     res.status(200).json({ token });
@@ -90,5 +90,125 @@ exports.getMe = async (req, res) => {
   } catch (error) {
     console.error('Lỗi khi lấy thông tin người dùng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.user_id; // Lấy user_id từ middleware authenticateJWT
+    const { username, email, phone_number, birthDate } = req.body;
+
+    // Kiểm tra nếu username đã được sử dụng bởi người khác
+    if (username) {
+      const existingUser = await User.findOne({ username, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Tên đăng nhập đã được sử dụng.' });
+      }
+    }
+
+    // Cập nhật thông tin User
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { username, email, phone_number },
+      { new: true, runValidators: true }
+    ).select('-password'); // Không trả về mật khẩu
+
+    // Cập nhật thông tin Profile
+    const updatedProfile = await Profile.findOneAndUpdate(
+      { user: userId },
+      { birthday: birthDate },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      message: 'Cập nhật thông tin thành công.',
+      user: updatedUser,
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    console.error('Lỗi khi cập nhật thông tin:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};
+// Thêm vào cùng với các exports khác
+exports.getProfile = async (req, res) => {
+  try {
+    // Lấy thông tin user từ token (req.user.user_id đã được set trong middleware)
+    const user = await User.findById(req.user.user_id)
+      .select('-password') // Không trả về password
+      .populate('favorites'); // Nếu cần populate thêm thông tin
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy người dùng.' 
+      });
+    }
+
+    // Lấy thêm thông tin profile nếu cần
+    const profile = await Profile.findOne({ user: req.user.user_id });
+
+    res.json({
+      success: true,
+      user: {
+        ...user.toObject(),
+        profile: profile ? profile.toObject() : null
+      }
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi lấy thông tin profile.' 
+    });
+  }
+};
+// controllers/authController.js
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword, resetToken } = req.body;
+
+    // Xác thực token
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    if (decoded.email !== email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token không hợp lệ.'
+      });
+    }
+
+    // Tìm user và cập nhật mật khẩu
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng.'
+      });
+    }
+
+    // Cập nhật mật khẩu mới
+    user.password = newPassword;
+    await user.save();
+
+    // Xóa tất cả OTP của user này
+    await OTP.deleteMany({ userId: user._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Đổi mật khẩu thành công.'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Token không hợp lệ hoặc đã hết hạn.'
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi đổi mật khẩu.'
+    });
   }
 };

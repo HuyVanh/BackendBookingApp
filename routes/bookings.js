@@ -7,7 +7,7 @@ const { authenticateJWT, authorizeCancelBooking } = require('../middleware/authM
 const { authorizeRole } = require('../middleware/authorizeRole');
 
 // Lấy danh sách đặt phòng của người dùng
-router.get('/', authenticateJWT, bookingController.getUserBookings);
+router.get('/user-bookings', authenticateJWT, bookingController.getUserBookings);
 
 // Lấy danh sách tất cả các đặt phòng (chỉ admin)
 router.get('/admin', authenticateJWT, authorizeRole('admin'), bookingController.getAllBookings);
@@ -21,6 +21,8 @@ router.put('/:id/status', authenticateJWT, authorizeRole('admin'), bookingContro
 
 // Hủy đặt phòng - chỉ admin hoặc người dùng đã đặt phòng
 router.delete('/:id', authenticateJWT, authorizeCancelBooking, bookingController.cancelBooking);
+router.put('/:id/payment', authenticateJWT, bookingController.updateBookingPayment);
+router.get('/check-availability/:roomId', authenticateJWT, bookingController.checkRoomAvailability);
 
 // Tạo đặt phòng mới với kiểm tra dữ liệu
 router.post(

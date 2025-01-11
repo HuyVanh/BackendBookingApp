@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
  */
 const roomSchema = new mongoose.Schema(
   {
+    //tên chi nhánh 
     hotel: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Hotel', 
@@ -15,7 +16,7 @@ const roomSchema = new mongoose.Schema(
     address: { type: String, required: true }, // Địa chỉ
     room_images: [{ type: String }], // Danh sách hình ảnh phòng
     details: {
-      room_type: { type: String, required: true }, // Loại phòng
+      room_type: { type: String, required: true, enum: ['standard', 'deluxe', 'suite', 'luxury', 'premium']  }, 
       bed: { type: String, required: true }, // Loại giường
       size: { type: String, required: true }, // Kích thước phòng
       guests: { type: Number, required: true }, // Số lượng khách

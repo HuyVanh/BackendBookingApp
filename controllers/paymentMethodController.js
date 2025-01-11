@@ -1,75 +1,69 @@
 // controllers/paymentMethodController.js
 const PaymentMethod = require('../models/PaymentMethod');
 
+// Get all payment methods
+exports.getAllPaymentMethods = async (req, res) => {
+  try {
+    const methods = await PaymentMethod.find({ is_active: true });
+    console.log('Found payment methods:', methods);
+    res.json(methods);
+  } catch (error) {
+    console.error('Error getting payment methods:', error);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+// Create new payment method
 exports.createPaymentMethod = async (req, res) => {
   try {
-    const { method_type, card_number, expiration_date, security_code } = req.body;
-
-    const paymentMethod = new PaymentMethod({
-      user: req.user.user_id,
-      method_type,
-      card_number,
-      expiration_date,
-      security_code,
-    });
-    await paymentMethod.save();
-
-    res.status(201).json(paymentMethod);
+    const paymentMethod = new PaymentMethod(req.body);
+    const newPaymentMethod = await paymentMethod.save();
+    res.status(201).json(newPaymentMethod);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(400).json({ message: error.message });
   }
 };
 
-exports.getUserPaymentMethods = async (req, res) => {
+// Get payment method by ID
+exports.getPaymentMethodById = async (req, res) => {
   try {
-    const methods = await PaymentMethod.find({ user: req.user.user_id });
-    res.status(200).json(methods);
+    const paymentMethod = await PaymentMethod.findById(req.params.id);
+    if (!paymentMethod) {
+      return res.status(404).json({ message: 'Payment method not found' });
+    }
+    res.json(paymentMethod);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(500).json({ message: error.message });
   }
 };
 
+// Update payment method
 exports.updatePaymentMethod = async (req, res) => {
   try {
-    const { method_type, card_number, expiration_date, security_code } = req.body;
-    const method = await PaymentMethod.findById(req.params.id);
-
-    if (!method) return res.status(404).json({ message: 'Không tìm thấy phương thức thanh toán.' });
-
-    // Kiểm tra quyền truy cập
-    if (method.user.toString() !== req.user.user_id) {
-      return res.status(403).json({ message: 'Truy cập bị từ chối.' });
+    const paymentMethod = await PaymentMethod.findById(req.params.id);
+    if (!paymentMethod) {
+      return res.status(404).json({ message: 'Payment method not found' });
     }
-
-    method.method_type = method_type || method.method_type;
-    method.card_number = card_number || method.card_number;
-    method.expiration_date = expiration_date || method.expiration_date;
-    method.security_code = security_code || method.security_code;
-
-    await method.save();
-    res.status(200).json(method);
+    Object.assign(paymentMethod, req.body);
+    const updatedPaymentMethod = await paymentMethod.save();
+    res.json(updatedPaymentMethod);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(400).json({ message: error.message });
   }
 };
 
+// Delete payment method
 exports.deletePaymentMethod = async (req, res) => {
   try {
-    const method = await PaymentMethod.findById(req.params.id);
-    if (!method) return res.status(404).json({ message: 'Không tìm thấy phương thức thanh toán.' });
-
-    // Kiểm tra quyền truy cập
-    if (method.user.toString() !== req.user.user_id) {
-      return res.status(403).json({ message: 'Truy cập bị từ chối.' });
+    const paymentMethod = await PaymentMethod.findById(req.params.id);
+    if (!paymentMethod) {
+      return res.status(404).json({ message: 'Payment method not found' });
     }
-
-    await method.remove();
-    res.status(200).json({ message: 'Xóa phương thức thanh toán thành công.' });
+    await paymentMethod.remove();
+    res.json({ message: 'Payment method deleted' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(500).json({ message: error.message });
   }
 };
+
+module.exports = exports;

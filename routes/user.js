@@ -34,13 +34,13 @@ router.put('/admin-info/update-password', authenticateJWT, authorizeRole('admin'
 router.put('/admin-info/update-avatar', authenticateJWT, authorizeRole('admin'), userController.updateAdminAvatar);
 // routes/user.js
 router.post('/create', authenticateJWT, authorizeRole('admin'), userController.createUser);
-
+router.get('/admin', authenticateJWT, userController.getAdmin);
 
 // Các route liên quan đến favorites
 router.post('/favorites', authenticateJWT, userController.addFavorite);
 router.get('/favorites', authenticateJWT, userController.getFavorites);
-router.delete('/favorites', authenticateJWT, userController.removeFavorite);
+// routes/user.js
+router.delete('/favorites/:roomId', authenticateJWT, userController.removeFavorite);
 
-// Bạn có thể thêm các route người dùng khác ở đây
 
 module.exports = router;
