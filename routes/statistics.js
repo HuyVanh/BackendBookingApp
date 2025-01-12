@@ -13,5 +13,7 @@ router.get('/revenue-per-day', authenticateJWT, authorizeRole('admin'), statisti
 
 // Thống kê doanh thu theo chi nhánh
 router.get('/branch-revenue', authenticateJWT, authorizeRole('admin'), statisticsController.getBranchRevenue);
+// Thống kê doanh thu theo phòng
+router.get('/room-revenue', authenticateJWT, authorizeRole('admin'), statisticsController.getRoomRevenue);
 
 module.exports = router;
