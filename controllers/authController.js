@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Profile = require('../models/Profile');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
 
 dotenv.config();
 
@@ -11,7 +12,7 @@ dotenv.config();
  */
 exports.register = async (req, res) => {
   try {
-    const { username, password, email, phone_number } = req.body;
+    const { username, password, email, phone_number, fullName } = req.body;
 
     // Kiểm tra xem người dùng đã tồn tại chưa
     const existingUser = await User.findOne({
@@ -21,19 +22,20 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Tên đăng nhập hoặc email đã tồn tại.' });
     }
     
-    // Tạo người dùng mới
+    // Tạo người dùng mới với fullName từ request
     const user = new User({
       username,
       password,
       email,
       phone_number,
+      fullName  // Thêm fullName vào đây
     });
     await user.save();
 
-    // Tạo hồ sơ người dùng
+    // Tạo hồ sơ người dùng, đồng bộ fullName với user
     const profile = new Profile({
       user: user._id,
-      full_name: '',
+      full_name: fullName,  // Sử dụng fullName từ request
       birthday: null,
       gender: 'Khác',
       phone_number: phone_number || '',
@@ -95,7 +97,7 @@ exports.getMe = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.user_id; // Lấy user_id từ middleware authenticateJWT
-    const { username, email, phone_number, birthDate } = req.body;
+    const { username, email, phone_number, birthDate, fullName } = req.body;
 
     // Kiểm tra nếu username đã được sử dụng bởi người khác
     if (username) {
@@ -108,25 +110,32 @@ exports.updateProfile = async (req, res) => {
     // Cập nhật thông tin User
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { username, email, phone_number },
+      { username, email, phone_number, fullName }, // Thêm fullName vào đây
       { new: true, runValidators: true }
-    ).select('-password'); // Không trả về mật khẩu
+    ).select('-password');
 
-    // Cập nhật thông tin Profile
+    // Cập nhật thông tin Profile và đồng bộ fullName
     const updatedProfile = await Profile.findOneAndUpdate(
       { user: userId },
-      { birthday: birthDate },
+      { 
+        birthday: birthDate,
+        full_name: fullName // Đồng bộ fullName với Profile
+      },
       { new: true, runValidators: true }
     );
 
     res.status(200).json({
+      success: true,
       message: 'Cập nhật thông tin thành công.',
       user: updatedUser,
       profile: updatedProfile,
     });
   } catch (error) {
     console.error('Lỗi khi cập nhật thông tin:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Lỗi máy chủ.' 
+    });
   }
 };
 // Thêm vào cùng với các exports khác
@@ -162,23 +171,79 @@ exports.getProfile = async (req, res) => {
     });
   }
 };
-// controllers/authController.js
-
+// Trong authController.js
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, newPassword, resetToken } = req.body;
+    const { email, newPassword } = req.body;
+    const authHeader = req.headers.authorization;
 
-    // Xác thực token
-    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    if (decoded.email !== email) {
-      return res.status(400).json({
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
         success: false,
-        message: 'Token không hợp lệ.'
+        message: 'Token không được cung cấp.'
       });
     }
 
-    // Tìm user và cập nhật mật khẩu
-    const user = await User.findOne({ email });
+    const token = authHeader.split(' ')[1];
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Tìm và cập nhật user với findOneAndUpdate thay vì findOne
+      const user = await User.findOneAndUpdate(
+        { email }, 
+        { $set: { password: newPassword } },
+        { 
+          new: true,          // Trả về document sau khi update
+          runValidators: false // Không chạy validators khi update
+        }
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy người dùng.'
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Đổi mật khẩu thành công.'
+      });
+
+    } catch (jwtError) {
+      console.error('JWT Error:', jwtError);
+      return res.status(401).json({
+        success: false,
+        message: 'Token không hợp lệ hoặc đã hết hạn.'
+      });
+    }
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi đổi mật khẩu.'
+    });
+  }
+};
+
+// controllers/authController.js
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const { oldPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp đầy đủ thông tin.'
+      });
+    }
+
+    // Tìm user
+    const user = await User.findById(userId);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -186,29 +251,30 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    // Cập nhật mật khẩu mới
-    user.password = newPassword;
-    await user.save();
+    // So sánh mật khẩu
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
 
-    // Xóa tất cả OTP của user này
-    await OTP.deleteMany({ userId: user._id });
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mật khẩu hiện tại không đúng.'
+      });
+    }
 
-    res.status(200).json({
+    // Hash và update mật khẩu mới
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(userId, { password: hashedNewPassword });
+
+    res.json({
       success: true,
       message: 'Đổi mật khẩu thành công.'
     });
 
   } catch (error) {
-    console.error('Reset password error:', error);
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Token không hợp lệ hoặc đã hết hạn.'
-      });
-    }
+    console.error('Password change error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi server khi đổi mật khẩu.'
+      message: 'Lỗi máy chủ.'
     });
   }
 };

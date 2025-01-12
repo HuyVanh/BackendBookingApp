@@ -310,3 +310,69 @@ exports.getBranchRevenue = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ.' });
   }
 };
+exports.getRoomRevenue = async (req, res) => {
+  try {
+    const { startDate, endDate, branchId } = req.query;
+    let matchStage = { status: 'confirmed' };
+
+    if (startDate && endDate) {
+      matchStage.booking_date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
+    }
+
+    const roomRevenue = await Booking.aggregate([
+      {
+        $match: matchStage
+      },
+      {
+        $lookup: {
+          from: 'rooms',
+          localField: 'room',
+          foreignField: '_id',
+          as: 'roomInfo'
+        }
+      },
+      {
+        $unwind: '$roomInfo'
+      },
+      {
+        $lookup: {
+          from: 'hotels',
+          localField: 'roomInfo.hotel',
+          foreignField: '_id',
+          as: 'hotelInfo'
+        }
+      },
+      {
+        $unwind: '$hotelInfo'
+      },
+      ...(branchId ? [
+        {
+          $match: {
+            'hotelInfo._id': new mongoose.Types.ObjectId(branchId)
+          }
+        }
+      ] : []),
+      {
+        $group: {
+          _id: '$roomInfo._id',
+          roomName: { $first: '$roomInfo.room_name' }, // Thay đổi từ name thành room_name
+          roomType: { $first: '$roomInfo.details.room_type' }, // Lấy thêm loại phòng
+          hotelName: { $first: '$hotelInfo.name' },
+          ticketCount: { $sum: 1 },
+          revenue: { $sum: '$price' }
+        }
+      },
+      {
+        $sort: { revenue: -1 }
+      }
+    ]);
+
+    res.status(200).json(roomRevenue);
+  } catch (error) {
+    console.error('Lỗi khi lấy doanh thu theo phòng:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ.' });
+  }
+};

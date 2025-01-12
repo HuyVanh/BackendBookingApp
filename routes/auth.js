@@ -36,5 +36,5 @@ router.get('/me', authenticateJWT, authController.getMe);
 router.post('/reset-password', authController.resetPassword);
 router.put('/update-profile', authenticateJWT, authController.updateProfile);
 router.get('/profile', authenticateJWT, authController.getProfile);
-
+router.put('/change-password', authenticateJWT, authController.changePassword);
 module.exports = router;
