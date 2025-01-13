@@ -111,7 +111,9 @@ exports.toggleUserStatus = async (req, res) => {
       return res.status(403).json({ message: 'Không có quyền truy cập.' });
     }
 
-    const user = await User.findById(req.params.id);
+    const userId = req.params.id;
+    
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
     }
@@ -121,10 +123,21 @@ exports.toggleUserStatus = async (req, res) => {
       return res.status(400).json({ message: 'Không thể thay đổi trạng thái của chính mình.' });
     }
 
-    user.isActive = !user.isActive;
-    await user.save();
+    // Sử dụng findByIdAndUpdate thay vì save()
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { isActive: !user.isActive },
+      { 
+        new: true,      // Trả về document sau khi update
+        runValidators: false  // Không chạy validation
+      }
+    );
 
-    res.status(200).json({ message: 'Cập nhật trạng thái người dùng thành công.', user });
+    res.status(200).json({
+      message: 'Cập nhật trạng thái người dùng thành công.',
+      user: updatedUser
+    });
+
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái người dùng:', error);
     res.status(500).json({ message: 'Lỗi máy chủ.' });
