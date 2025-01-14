@@ -1,8 +1,8 @@
 // controllers/roomController.js
 const Room = require("../models/Room");
 const User = require("../models/User");
+const Hotel = require('../models/Hotel');
 const mongoose = require("mongoose");
-
 
 
 
@@ -10,19 +10,27 @@ exports.getAllRooms = async (req, res) => {
   try {
     const filter = {};
 
-    // Kiểm tra nếu có tham số truy vấn 'isActive'
+    // Kiểm tra trạng thái phòng
     if (req.query.isActive !== undefined) {
-      // Chuyển đổi giá trị từ chuỗi sang boolean
       filter.isActive = req.query.isActive === "true";
     }
+
     if (req.query.room_type) {
       filter['details.room_type'] = req.query.room_type;
     }
 
-    // Thêm .populate('hotel') để lấy thông tin chi nhánh kèm theo
-    const rooms = await Room.find(filter).populate("hotel");
+    // Lấy phòng từ các chi nhánh đang hoạt động
+    const rooms = await Room.find(filter)
+      .populate({
+        path: "hotel",
+        match: { isActive: true }, // Chỉ lấy chi nhánh đang hoạt động
+        select: "name address isActive" // Chỉ lấy các trường cần thiết
+      });
 
-    res.status(200).json(rooms);
+    // Lọc bỏ các phòng không có thông tin khách sạn (do khách sạn không active)
+    const filteredRooms = rooms.filter(room => room.hotel != null);
+
+    res.status(200).json(filteredRooms);
   } catch (error) {
     console.error("Lỗi khi lấy danh sách phòng:", error);
     res.status(500).json({ message: "Lỗi máy chủ." });

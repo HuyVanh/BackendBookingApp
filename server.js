@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
+const path = require('path');
 const PaymentMethod = require('./models/PaymentMethod');
 const SocketService = require('./servicesSocket/socketService'); 
 
@@ -25,13 +26,20 @@ const io = socketIO(server, {
 const socketService = new SocketService(io);
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }  // Thêm dòng này
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined'));
 
-
+const fs = require('fs');
+const uploadDir = path.join(__dirname, 'public/uploads/avatars');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+app.use('/api/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // Routes
 app.use('/api', routes);
 
@@ -66,6 +74,7 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
 
 // Thêm hàm xử lý khi server shutdown
 const gracefulShutdown = () => {

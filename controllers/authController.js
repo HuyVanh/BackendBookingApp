@@ -62,6 +62,9 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng.' });
     }
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Tài khoản đã bị vô hiệu hóa' });
+    }
 
     // Kiểm tra mật khẩu
     const isMatch = await user.matchPassword(password);
@@ -189,22 +192,24 @@ exports.resetPassword = async (req, res) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Tìm và cập nhật user với findOneAndUpdate thay vì findOne
-      const user = await User.findOneAndUpdate(
-        { email }, 
-        { $set: { password: newPassword } },
-        { 
-          new: true,          // Trả về document sau khi update
-          runValidators: false // Không chạy validators khi update
-        }
-      );
-
+      // Tìm user trước
+      const user = await User.findOne({ email });
+      
       if (!user) {
         return res.status(404).json({
           success: false,
           message: 'Không tìm thấy người dùng.'
         });
       }
+
+      // Set password mới và lưu để trigger middleware pre save
+      user.password = newPassword;
+      await user.save();
+
+      console.log('Password reset successful for user:', {
+        email: user.email,
+        userId: user._id
+      });
 
       res.status(200).json({
         success: true,
@@ -226,7 +231,6 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
-
 // controllers/authController.js
 exports.changePassword = async (req, res) => {
   try {

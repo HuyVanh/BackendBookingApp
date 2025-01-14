@@ -1,4 +1,5 @@
 const Hotel = require('../models/Hotel');
+const Room = require('../models/Room');
 
 // Tạo mới hotel
 exports.createHotel = async (req, res) => {
@@ -95,14 +96,26 @@ exports.toggleHotelStatus = async (req, res) => {
     }
 
     // Đảo ngược trạng thái hiện tại
-    hotel.isActive = !hotel.isActive;
+    const newStatus = !hotel.isActive;
+    hotel.isActive = newStatus;
     hotel.updated_at = Date.now();
+
+    // Cập nhật trạng thái của tất cả các phòng thuộc khách sạn này
+    await Room.updateMany(
+      { hotel: id }, 
+      { 
+        $set: { 
+          isActive: newStatus,
+          updated_at: Date.now()
+        } 
+      }
+    );
 
     await hotel.save();
 
     res.status(200).json({
-      message: `Khách sạn đã được ${hotel.isActive ? 'kích hoạt' : 'vô hiệu hóa'}.`,
-      isActive: hotel.isActive
+      message: `Khách sạn và tất cả phòng đã được ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'}.`,
+      isActive: newStatus
     });
   } catch (error) {
     console.error('Lỗi khi bật/tắt trạng thái khách sạn:', error);
