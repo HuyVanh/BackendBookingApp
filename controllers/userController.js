@@ -1,7 +1,9 @@
 // controllers/userController.js
 const User = require('../models/User');
 const Profile = require('../models/Profile');
-const Room = require('../models/Room'); // Import mô hình Room nếu cần
+const Room = require('../models/Room');
+const multer = require('multer');
+const path = require('path');
 
 /**
  * Lấy danh sách tất cả người dùng (không bao gồm admin)
@@ -241,41 +243,102 @@ exports.toggleStaffStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const staff = await User.findById(id);
-
-    if (!staff || staff.role !== 'staff') {
+    // Kiểm tra xem user có tồn tại và có phải là staff không
+    const staff = await User.findOne({ _id: id, role: 'staff' });
+    if (!staff) {
       return res.status(404).json({ message: 'Không tìm thấy nhân viên.' });
     }
 
-    // Thay đổi trạng thái isActive
-    staff.isActive = !staff.isActive;
-    await staff.save();
+    // Sử dụng findByIdAndUpdate thay vì save() để tránh validation
+    const updatedStaff = await User.findByIdAndUpdate(
+      id,
+      { isActive: !staff.isActive },
+      { 
+        new: true,         // Trả về document đã được update
+        runValidators: false // Không chạy validation
+      }
+    );
 
-    res.status(200).json({ message: 'Cập nhật trạng thái nhân viên thành công.', user: staff });
+    if (!updatedStaff) {
+      return res.status(404).json({ message: 'Không tìm thấy nhân viên.' });
+    }
+
+    res.status(200).json({ 
+      message: 'Cập nhật trạng thái nhân viên thành công.',
+      user: updatedStaff 
+    });
+
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái nhân viên:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    res.status(500).json({ 
+      message: 'Lỗi khi cập nhật trạng thái nhân viên.',
+      error: error.message 
+    });
   }
 };
 /**
  * Cập nhật avatar cho người dùng
  * Người dùng có thể cập nhật avatar của chính mình
  */
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'public/uploads/avatars/') // Tạo thư mục này trong project
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)) // Tên file = timestamp + đuôi file
+  }
+});
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn 5MB
+  fileFilter: function (req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Chỉ chấp nhận file ảnh!'), false);
+    }
+    cb(null, true);
+  }
+});
 exports.updateAvatar = async (req, res) => {
   try {
+    console.log('Upload request received:', req.file);
     const userId = req.user.user_id;
-    const { avatar } = req.body; // URL của ảnh mới
+
+    if (!req.file) {
+      console.log('No file found in request');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Không tìm thấy file ảnh.' 
+      });
+    }
+
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    console.log('Avatar URL:', avatarUrl);
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Không tìm thấy người dùng.' 
+      });
+    }
 
-    user.avatar = avatar;
+    user.avatar = avatarUrl;
     await user.save();
 
-    res.status(200).json({ message: 'Cập nhật avatar thành công.', user });
+    console.log('User updated successfully:', user);
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật avatar thành công.',
+      data: { avatar: avatarUrl }
+    });
+
   } catch (error) {
-    console.error('Lỗi khi cập nhật avatar:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ.' });
+    console.error('Error in updateAvatar:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi server khi cập nhật avatar.' 
+    });
   }
 };
 
