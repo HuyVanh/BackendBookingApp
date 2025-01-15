@@ -298,47 +298,61 @@ const upload = multer({
     cb(null, true);
   }
 });
+// controllers/userController.js
 exports.updateAvatar = async (req, res) => {
   try {
-    console.log('Upload request received:', req.file);
-    const userId = req.user.user_id;
+      const userId = req.user.user_id;
 
-    if (!req.file) {
-      console.log('No file found in request');
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Không tìm thấy file ảnh.' 
+      // Kiểm tra file
+      if (!req.file) {
+          return res.status(400).json({
+              success: false,
+              message: 'Vui lòng chọn file ảnh.'
+          });
+      }
+
+      // Tạo đường dẫn avatar
+      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+      // Cập nhật user với runValidators: false để tránh lỗi validation
+      const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { avatar: avatarUrl },
+          { 
+              new: true,
+              runValidators: false 
+          }
+      );
+
+      if (!updatedUser) {
+          return res.status(404).json({
+              success: false,
+              message: 'Không tìm thấy người dùng.'
+          });
+      }
+
+      // Xóa ảnh cũ nếu có
+      if (updatedUser.avatar && updatedUser.avatar !== avatarUrl) {
+          const oldAvatarPath = path.join(__dirname, '../public', updatedUser.avatar);
+          fs.unlink(oldAvatarPath, (err) => {
+              if (err) console.error('Không thể xóa ảnh cũ:', err);
+          });
+      }
+
+      res.status(200).json({
+          success: true,
+          message: 'Cập nhật avatar thành công.',
+          data: {
+              avatar: avatarUrl
+          }
       });
-    }
-
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    console.log('Avatar URL:', avatarUrl);
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Không tìm thấy người dùng.' 
-      });
-    }
-
-    user.avatar = avatarUrl;
-    await user.save();
-
-    console.log('User updated successfully:', user);
-
-    res.status(200).json({
-      success: true,
-      message: 'Cập nhật avatar thành công.',
-      data: { avatar: avatarUrl }
-    });
 
   } catch (error) {
-    console.error('Error in updateAvatar:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Lỗi server khi cập nhật avatar.' 
-    });
+      console.error('Lỗi khi cập nhật avatar:', error);
+      res.status(500).json({
+          success: false,
+          message: 'Lỗi server khi cập nhật avatar.'
+      });
   }
 };
 

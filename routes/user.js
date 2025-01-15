@@ -63,7 +63,12 @@ router.patch(
   userController.toggleStaffStatus
 );
 // Giả sử chỉ cần authenticateJWT, không cần authorizeRole
-router.put('/update-avatar', authenticateJWT, upload.single('avatar'), userController.updateAvatar);
+router.put(
+  "/update-avatar",
+  authenticateJWT,
+  upload.single("avatar"),
+  userController.updateAvatar
+);
 // Thêm route lấy thông tin admin (chỉ admin)
 router.get(
   "/admin-info",

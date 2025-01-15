@@ -99,7 +99,7 @@ exports.getMe = async (req, res) => {
 };
 exports.updateProfile = async (req, res) => {
   try {
-    const userId = req.user.user_id; // Lấy user_id từ middleware authenticateJWT
+    const userId = req.user.user_id;
     const { username, email, phone_number, birthDate, fullName } = req.body;
 
     // Kiểm tra nếu username đã được sử dụng bởi người khác
