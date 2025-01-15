@@ -29,18 +29,26 @@ exports.getReviewsByRoom = async (req, res) => {
   try {
     const { roomId } = req.params;
     const reviews = await RoomReview.find({ room: roomId })
-      .populate('user', 'username email');
+      .populate({
+        path: 'user',
+        select: 'username email avatar' // Đảm bảo chọn đúng trường avatar
+      })
+      .lean();
+    
+    // Thêm log để kiểm tra
+    console.log('Reviews data:', JSON.stringify(reviews, null, 2));
+    
     res.status(200).json(reviews);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error.' });
+    console.error('Lỗi khi lấy reviews:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 exports.getReviewsByUser = async (req, res) => {
   try {
     const reviews = await RoomReview.find({ user: req.user.user_id })
-      .populate('room', 'room_name address');
+      .populate('room', 'room_name address, avatar');
     res.status(200).json(reviews);
   } catch (error) {
     console.error(error);

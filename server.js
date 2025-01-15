@@ -39,7 +39,7 @@ const uploadDir = path.join(__dirname, 'public/uploads/avatars');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-app.use('/api/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 // Routes
 app.use('/api', routes);
 
