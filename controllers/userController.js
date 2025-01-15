@@ -4,6 +4,7 @@ const Profile = require('../models/Profile');
 const Room = require('../models/Room');
 const multer = require('multer');
 const path = require('path');
+const { cloudinary } = require('../config/cloudinary');
 
 /**
  * Lấy danh sách tất cả người dùng (không bao gồm admin)
@@ -282,18 +283,15 @@ exports.toggleStaffStatus = async (req, res) => {
  */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Sử dụng path.join để tạo đường dẫn đúng
     const uploadPath = path.join(__dirname, '../public/uploads/avatars');
-    // Đảm bảo thư mục tồn tại
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    // Thêm userId vào tên file để dễ quản lý
-    const uniqueSuffix = `avatar-${req.user.user_id}-${Date.now()}`;
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    const uniqueSuffix = `avatar-${req.user.user_id}-${Date.now()}${path.extname(file.originalname)}`;
+    cb(null, uniqueSuffix);
   }
 });
 const upload = multer({ 
@@ -309,61 +307,39 @@ const upload = multer({
 // controllers/userController.js
 exports.updateAvatar = async (req, res) => {
   try {
-      const userId = req.user.user_id;
+    const userId = req.user.user_id;
 
-      if (!req.file) {
-          return res.status(400).json({
-              success: false,
-              message: 'Vui lòng chọn file ảnh.'
-          });
-      }
-
-      // Tạo đường dẫn avatar tương đối
-      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-
-      // Tìm user hiện tại để lấy avatar cũ
-      const currentUser = await User.findById(userId);
-      
-      if (!currentUser) {
-          return res.status(404).json({
-              success: false,
-              message: 'Không tìm thấy người dùng.'
-          });
-      }
-
-      // Xóa avatar cũ nếu có
-      if (currentUser.avatar) {
-          const oldAvatarPath = path.join(__dirname, '../public', currentUser.avatar);
-          try {
-              if (fs.existsSync(oldAvatarPath)) {
-                  fs.unlinkSync(oldAvatarPath);
-              }
-          } catch (err) {
-              console.error('Lỗi khi xóa avatar cũ:', err);
-          }
-      }
-
-      // Cập nhật user với avatar mới
-      const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          { avatar: avatarUrl },
-          { new: true }
-      );
-
-      res.status(200).json({
-          success: true,
-          message: 'Cập nhật avatar thành công.',
-          data: {
-              avatar: avatarUrl
-          }
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng chọn file ảnh.'
       });
+    }
+
+    // Tạo đường dẫn tương đối thay vì dùng path tuyệt đối
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+    // Cập nhật user với URL avatar mới
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { avatar: avatarUrl },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Cập nhật avatar thành công.',
+      data: {
+        avatar: avatarUrl
+      }
+    });
 
   } catch (error) {
-      console.error('Lỗi khi cập nhật avatar:', error);
-      res.status(500).json({
-          success: false,
-          message: 'Lỗi server khi cập nhật avatar.'
-      });
+    console.error('Lỗi khi cập nhật avatar:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server khi cập nhật avatar.'
+    });
   }
 };
 
