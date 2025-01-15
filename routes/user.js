@@ -2,11 +2,11 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");
+const { upload } = require('../config/cloudinary');
 const {
   authenticateJWT,
   authorizeRole,
 } = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploadMiddleware");
 
 // Lấy danh sách người dùng (chỉ admin)
 router.get(

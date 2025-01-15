@@ -282,10 +282,18 @@ exports.toggleStaffStatus = async (req, res) => {
  */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/uploads/avatars/') // Tạo thư mục này trong project
+    // Sử dụng path.join để tạo đường dẫn đúng
+    const uploadPath = path.join(__dirname, '../public/uploads/avatars');
+    // Đảm bảo thư mục tồn tại
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname)) // Tên file = timestamp + đuôi file
+    // Thêm userId vào tên file để dễ quản lý
+    const uniqueSuffix = `avatar-${req.user.user_id}-${Date.now()}`;
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 const upload = multer({ 
@@ -303,7 +311,6 @@ exports.updateAvatar = async (req, res) => {
   try {
       const userId = req.user.user_id;
 
-      // Kiểm tra file
       if (!req.file) {
           return res.status(400).json({
               success: false,
@@ -311,33 +318,37 @@ exports.updateAvatar = async (req, res) => {
           });
       }
 
-      // Tạo đường dẫn avatar
+      // Tạo đường dẫn avatar tương đối
       const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
-      // Cập nhật user với runValidators: false để tránh lỗi validation
-      const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          { avatar: avatarUrl },
-          { 
-              new: true,
-              runValidators: false 
-          }
-      );
-
-      if (!updatedUser) {
+      // Tìm user hiện tại để lấy avatar cũ
+      const currentUser = await User.findById(userId);
+      
+      if (!currentUser) {
           return res.status(404).json({
               success: false,
               message: 'Không tìm thấy người dùng.'
           });
       }
 
-      // Xóa ảnh cũ nếu có
-      if (updatedUser.avatar && updatedUser.avatar !== avatarUrl) {
-          const oldAvatarPath = path.join(__dirname, '../public', updatedUser.avatar);
-          fs.unlink(oldAvatarPath, (err) => {
-              if (err) console.error('Không thể xóa ảnh cũ:', err);
-          });
+      // Xóa avatar cũ nếu có
+      if (currentUser.avatar) {
+          const oldAvatarPath = path.join(__dirname, '../public', currentUser.avatar);
+          try {
+              if (fs.existsSync(oldAvatarPath)) {
+                  fs.unlinkSync(oldAvatarPath);
+              }
+          } catch (err) {
+              console.error('Lỗi khi xóa avatar cũ:', err);
+          }
       }
+
+      // Cập nhật user với avatar mới
+      const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          { avatar: avatarUrl },
+          { new: true }
+      );
 
       res.status(200).json({
           success: true,

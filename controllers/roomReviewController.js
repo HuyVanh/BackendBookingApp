@@ -31,7 +31,7 @@ exports.getReviewsByRoom = async (req, res) => {
     const reviews = await RoomReview.find({ room: roomId })
       .populate({
         path: 'user',
-        select: 'username email avatar' // Đảm bảo chọn đúng trường avatar
+        select: 'username email avatar' 
       })
       .lean();
     
