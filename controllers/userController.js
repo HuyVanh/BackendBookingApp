@@ -281,29 +281,7 @@ exports.toggleStaffStatus = async (req, res) => {
  * Cập nhật avatar cho người dùng
  * Người dùng có thể cập nhật avatar của chính mình
  */
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadPath = path.join(__dirname, '../public/uploads/avatars');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = `avatar-${req.user.user_id}-${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, uniqueSuffix);
-  }
-});
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn 5MB
-  fileFilter: function (req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return cb(new Error('Chỉ chấp nhận file ảnh!'), false);
-    }
-    cb(null, true);
-  }
-});
+// controllers/userController.js
 // controllers/userController.js
 exports.updateAvatar = async (req, res) => {
   try {
@@ -316,8 +294,8 @@ exports.updateAvatar = async (req, res) => {
       });
     }
 
-    // Tạo đường dẫn tương đối thay vì dùng path tuyệt đối
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // Lấy URL từ Cloudinary
+    const avatarUrl = req.file.path;
 
     // Cập nhật user với URL avatar mới
     const updatedUser = await User.findByIdAndUpdate(
@@ -330,7 +308,8 @@ exports.updateAvatar = async (req, res) => {
       success: true,
       message: 'Cập nhật avatar thành công.',
       data: {
-        avatar: avatarUrl
+        avatar: avatarUrl,
+        user: updatedUser
       }
     });
 
